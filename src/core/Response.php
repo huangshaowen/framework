@@ -193,6 +193,16 @@ class Response {
     }
 
     /**
+     * 输出长度
+     * @param type $length
+     * @return $this
+     */
+    public function contentLength($length) {
+        $this->headers['Content-Length'] = $length;
+        return $this;
+    }
+
+    /**
      * 获取头部信息
      * @access public
      * @param  string $name 头部名称
