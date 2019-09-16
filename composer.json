@@ -14,7 +14,7 @@
         "guzzlehttp/guzzle": "^6.3",
         "symfony/var-dumper": "^3.4",
         "phpaes/phpaes": "^3.1",
-        "psr/log": "^1.0"
+        "monolog/monolog": "^1.25"
     },
     "autoload": {
         "psr-4": {

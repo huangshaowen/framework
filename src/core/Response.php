@@ -131,6 +131,14 @@ class Response {
         $this->contentType($this->contentType, $this->charset);
     }
 
+    public static function getInstance() {
+        static $obj;
+        if (!$obj) {
+            $obj = new self();
+        }
+        return $obj;
+    }
+
     /**
      * LastModified
      * @access public
@@ -352,14 +360,6 @@ class Response {
             // 提高页面响应
             fastcgi_finish_request();
         }
-    }
-
-    public static function getInstance() {
-        static $obj;
-        if (!$obj) {
-            $obj = new self();
-        }
-        return $obj;
     }
 
     /**

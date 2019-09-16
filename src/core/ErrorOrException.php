@@ -58,7 +58,7 @@ class ErrorOrException {
                 // 抛出异常，记录到日志
                 $errnostr = isset($errortype[$errno]) ? $errortype[$errno] : 'Unknonw';
                 $s = "[{$errnostr}] : {$errstr} in File {$errfile}, Line: {$errline}";
-                Log::emerg($s);
+                Log::getInstance()->emerg($s);
 
                 $msg = "500 Internal Server Error {$errno} {$s}";
 
@@ -76,13 +76,13 @@ class ErrorOrException {
                 // 记录到日志
                 $errnostr = isset($errortype[$errno]) ? $errortype[$errno] : 'Unknonw';
                 $s = "[{$errnostr}] : {$errstr} in File {$errfile}, Line: {$errline}";
-                Log::warning($s);
+                Log::getInstance()->warning($s);
                 break;
             case E_NOTICE:
                 // 记录到日志
                 $errnostr = isset($errortype[$errno]) ? $errortype[$errno] : 'Unknonw';
                 $s = "[{$errnostr}] : {$errstr} in File {$errfile}, Line: {$errline}";
-                Log::notice($s);
+                Log::getInstance()->notice($s);
                 break;
             default:
                 break;
@@ -99,7 +99,7 @@ class ErrorOrException {
 
         /* 记录日志 */
         $msg = $exception->getMessage() . ' File: ' . $errfile . ' [' . $exception->getLine() . ']';
-        Log::emerg($msg);
+        Log::getInstance()->emerg($msg);
 
         if ((Request::getInstance()->isAjax() == true) || Request::getInstance()->isCli() == true) {
             $json = ['ret' => $exception->getCode(), 'data' => null, 'msg' => $exception->getMessage()];

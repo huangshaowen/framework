@@ -200,6 +200,14 @@ class Request {
         $this->input = file_get_contents('php://input');
     }
 
+    public static function getInstance() {
+        static $obj;
+        if (!$obj) {
+            $obj = new self();
+        }
+        return $obj;
+    }
+
     public function __call($method, $args) {
         if (array_key_exists($method, $this->hook)) {
             array_unshift($args, $this);
@@ -222,14 +230,6 @@ class Request {
         } else {
             $this->hook[$method] = $callback;
         }
-    }
-
-    public static function getInstance() {
-        static $obj;
-        if (!$obj) {
-            $obj = new self();
-        }
-        return $obj;
     }
 
     /**

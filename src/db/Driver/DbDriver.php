@@ -374,7 +374,7 @@ abstract class DbDriver {
         if (!empty($this->queryString)) {
             $this->error .= "[ SQL语句 ] : " . $this->queryString . "\t" . $this->PDOStatement->errorCode();
         }
-        Log::sql($this->error);
+        Log::getInstance()->sql($this->error);
         return $this->error;
     }
 
@@ -963,7 +963,7 @@ abstract class DbDriver {
         /* 如果 where 为空,不允许执行 */
         if (empty($options['where'])) {
             $this->error = "[UPDATE 语句无 Where 条件] [ SQL语句 ] : {$sql} ";
-            Log::sql($this->error);
+            Log::getInstance()->sql($this->error);
             return false;
         }
 
@@ -998,7 +998,7 @@ abstract class DbDriver {
         /* 如果 where 为空,不允许执行 */
         if (empty($options['where'])) {
             $this->error = "[DELETE 语句无 Where 条件] [ SQL语句 ] : {$sql} ";
-            Log::sql($this->error);
+            Log::getInstance()->sql($this->error);
             return false;
         }
 

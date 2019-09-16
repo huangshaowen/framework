@@ -3,7 +3,6 @@
 namespace framework\core;
 
 /**
- *
  * 网站配置
  */
 class Config implements \ArrayAccess {

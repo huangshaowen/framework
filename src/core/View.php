@@ -12,6 +12,14 @@ class View {
     // 模板赋值
     public $_var = [];
 
+    public static function getInstance() {
+        static $obj;
+        if (!$obj) {
+            $obj = new self();
+        }
+        return $obj;
+    }
+
     public function fetch($tpl, $dir = null) {
         if (null === $dir) {
             $dir = Config::getInstance()->get('template_dir');
@@ -87,14 +95,6 @@ class View {
      */
     public function e($str) {
         return htmlentities($str);
-    }
-
-    public static function getInstance() {
-        static $obj;
-        if (!$obj) {
-            $obj = new self();
-        }
-        return $obj;
     }
 
     public function __destruct() {
