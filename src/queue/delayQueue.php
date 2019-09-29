@@ -172,7 +172,7 @@ class delayQueue {
         }
 
         /* 加锁 */
-        $rs = Redis::getInstance()->lock($zname, 60);
+        $rs = Redis::getInstance()->lock($zname, 10);
         if ($rs == false) {
             /* 加锁失败 */
             return false;
