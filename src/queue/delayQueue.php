@@ -109,7 +109,8 @@ class delayQueue {
         }
 
         /* 加锁 */
-        $rs = Redis::getInstance()->lock($zname, 10);
+        $lock_key = "qpop_{$zname}";
+        $rs = Redis::getInstance()->lock($lock_key, 10);
         if ($rs == false) {
             /* 加锁失败 */
             return false;
@@ -143,7 +144,7 @@ class delayQueue {
         ssdbService::getInstance()->zset('delay_queue', $queue_name, $total);
 
         /* 解锁 */
-        Redis::getInstance()->unlock($zname);
+        Redis::getInstance()->unlock($lock_key);
 
         /* 返回 */
         if (empty($return_data)) {
@@ -172,7 +173,8 @@ class delayQueue {
         }
 
         /* 加锁 */
-        $rs = Redis::getInstance()->lock($zname, 10);
+        $lock_key = "move_to_queue_{$zname}";
+        $rs = Redis::getInstance()->lock($lock_key, 10);
         if ($rs == false) {
             /* 加锁失败 */
             return false;
@@ -181,7 +183,7 @@ class delayQueue {
         /* 获取数据 */
         $score_end = time();
         $score_start = $score_end - 365 * 24 * 3600;
-        $size = ($size > 1000 && $size <= 0) ? 1000 : $size;
+        $size = ($size > 100 && $size <= 0) ? 100 : $size;
         $items = ssdbService::getInstance()->zscan($zname, '', $score_start, $score_end, $size);
         if ($items) {
             foreach ($items as $id => $time) {
@@ -207,7 +209,7 @@ class delayQueue {
         ssdbService::getInstance()->zset('delay_queue', $queue_name, $total);
 
         /* 解锁 */
-        Redis::getInstance()->unlock($zname);
+        Redis::getInstance()->unlock($lock_key);
 
         /* 返回 */
         return true;
