@@ -159,9 +159,11 @@ class rabbitmqQueue {
             $json = $this->delay_qpop_single($queue_name);
             if ($json) {
                 $data[] = $json;
+            } else {
+                break;
             }
-            return $data;
         }
+        return $data;
     }
 
     /**
@@ -303,8 +305,8 @@ class rabbitmqQueue {
             } else {
                 break;
             }
-            return $data;
         }
+        return $data;
     }
 
     /**
