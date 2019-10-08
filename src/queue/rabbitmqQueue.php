@@ -255,6 +255,36 @@ class rabbitmqQueue {
     }
 
     /**
+     * 普通队列批量加入数据
+     * @param type $queue_name
+     * @param type $datas
+     * @return boolean
+     */
+    public function batch_qpush($queue_name = 'queue_task', $datas = []) {
+        $exchange_name = $this->getExchangeKey($queue_name);
+
+        $this->channel->exchange_declare($exchange_name, 'direct', false, false, false); // 持久交换机
+        $this->channel->queue_declare($queue_name, false, true, false, false);   // 持久队列
+        $this->channel->queue_bind($queue_name, $exchange_name); //将队列与某个交换机进行绑定
+
+        $i = 0;
+        $batch = 100;
+
+        foreach ($datas as $key => $data) {
+            $body = $this->setValue($data);
+            $msg = new \PhpAmqpLib\Message\AMQPMessage($body, ['delivery_mode' => 2]);
+
+            $this->channel->batch_basic_publish($msg, $exchange_name);
+            $i++;
+            if ($i % $batch == 0) {
+                $this->channel->publish_batch();
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * 普通队列弹出数据
      * @param   string      $queue_name     队列名称
      * @param   int         $size           数量
