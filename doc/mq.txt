@@ -1,0 +1,59 @@
+
+rabbitmq 队列使用示例
+
+ * 注意事项：
+ * 队列名只能有一种属性，不支持普通与延时队列混用
+
+class mq {
+
+    public function new_task() {
+        $queue_name = 'guipin_task';
+        for ($i = 0; $i < 10000; $i++) {
+            $queue_data = ["name" => $i, "ctime" => date('Y-m-d H:i:s')];
+            \framework\queue\rabbitmqQueue::getInstance()->qpush($queue_name, $queue_data);
+        }
+        echo " [x] Sent done \n";
+    }
+
+    public function worker() {
+        $queue_name = 'guipin_task';
+        $total = \framework\queue\rabbitmqQueue::getInstance()->size($queue_name);       
+        for ($i = 0; $i < $total; $i++) {
+            $r = \framework\queue\rabbitmqQueue::getInstance()->qpop($queue_name);
+            dump($r);
+        }
+        $callback = function ($msg) {
+            echo date('Y-m-d H:i:s') . " [x] Received", $msg->body, PHP_EOL;
+
+            $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
+        };
+        \framework\queue\rabbitmqQueue::getInstance()->consume($queue_name, $callback);
+    }
+
+
+    public function delay_task() {
+        $queue_name = 'guipin_delay_task';
+        for ($i = 0; $i < 10000; $i++) {
+            $ttl = ($i / 100);
+            $queue_data = ["name" => $i, "ctime" => date('Y-m-d H:i:s')];
+            \framework\queue\rabbitmqQueue::getInstance()->delay_qpush($queue_name, $queue_data, $ttl);
+        }
+        echo " [x] Sent done \n";
+    }
+
+    public function delay_worker() {
+        $queue_name = 'guipin_delay_task';
+        $total = \framework\queue\rabbitmqQueue::getInstance()->delay_size($queue_name);
+        for ($i = 0; $i < $total; $i++) {
+            $r = \framework\queue\rabbitmqQueue::getInstance()->delay_qpop($queue_name);
+            dump($r);
+        }
+        $callback = function ($msg) {
+            echo date('Y-m-d H:i:s') . " [x] Received", $msg->body, PHP_EOL;
+
+            $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
+        };
+        \framework\queue\rabbitmqQueue::getInstance()->delay_consume($queue_name, $callback);
+    }
+
+}
