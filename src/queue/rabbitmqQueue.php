@@ -23,6 +23,7 @@ class rabbitmqQueue {
 
     protected $connection;
     protected $channel;
+    protected $mq_config;
 
     public static function getInstance() {
         static $obj;
@@ -250,7 +251,7 @@ class rabbitmqQueue {
         $this->channel->queue_bind($queue_name, $exchange_name); //将队列与某个交换机进行绑定
 
         $body = $this->setValue($data);
-        $msg = new \PhpAmqpLib\Message\AMQPMessage($body, ['delivery_mode' => 2]);
+        $msg = new \PhpAmqpLib\Message\AMQPMessage($body, ['delivery_mode' => 1]);
         $this->channel->basic_publish($msg, $exchange_name);
 
         return true;
@@ -274,7 +275,7 @@ class rabbitmqQueue {
 
         foreach ($datas as $key => $data) {
             $body = $this->setValue($data);
-            $msg = new \PhpAmqpLib\Message\AMQPMessage($body, ['delivery_mode' => 2]);
+            $msg = new \PhpAmqpLib\Message\AMQPMessage($body, ['delivery_mode' => 1]);
 
             $this->channel->batch_basic_publish($msg, $exchange_name);
             $i++;
