@@ -387,6 +387,141 @@ class Redis {
     }
 
     /**
+     * 设置 hashmap 中指定 key 对应的值内容.
+     * 参数
+     *     name - hashmap 的名字.
+     *     key - hashmap 中的 key.
+     *     value - key 对应的值内容.
+     * 返回值
+     *      出错则返回 false, 其它值表示正常.
+     */
+    public function hset($name, $k, $v) {
+        if ($this->is_available()) {
+            return $this->_getConForKey($name)->hSet($name, $k, $v);
+        }
+        return false;
+    }
+
+    /**
+     * 获取 hashmap 中指定 key 的值内容.
+     * 参数
+     *      name - hashmap 的名字.
+     *      key - hashmap 中的 key.
+     * 返回值
+     *      如果 key 不存在则返回 null, 如果出错则返回 false, 否则返回 key 对应的值内容.
+     */
+    public function hget($name, $k) {
+        if ($this->is_available()) {
+            return $this->_getConForKey($name)->hGet($name, $k);
+        }
+        return false;
+    }
+
+    /**
+     * 获取 hashmap 中的指定 key.
+     * 参数
+     *      name - hashmap 的名字.
+     *      key - hashmap 中的 key.
+     * 返回值
+     *      如果出错则返回 false, 其它值表示正常. 你无法通过返回值来判断被删除的 key 是否存在.
+     */
+    public function hdel($name, $k) {
+        if ($this->is_available()) {
+            return $this->_getConForKey($name)->hDel($name, $k);
+        }
+        return false;
+    }
+
+    /**
+     * 使 hashmap 中的 key 对应的值增加 num. 参数 num 可以为负数. 如果原来的值不是整数(字符串形式的整数), 它会被先转换成整数.
+     * 参数
+     *      name - hashmap 的名字.
+     *      key -
+     *      num - 必须是有符号整数.
+     * 返回值
+     *      如果出错则返回 false, 否则返回新的值.
+     */
+    public function hincr($name, $k, $v) {
+        if ($this->is_available()) {
+            $v = intval($v);
+            return $this->_getConForKey($name)->hIncrBy($name, $k, $v);
+        }
+        return false;
+    }
+
+    /**
+     * 判断指定的 key 是否存在于 hashmap 中.
+     * 参数
+     *      name - hashmap 的名字.
+     *      key -
+     * 返回值
+     *      如果存在, 返回 true, 否则返回 false.
+     */
+    public function hexists($name, $k) {
+        if ($this->is_available()) {
+            return $this->_getConForKey($name)->hExists($name, $k);
+        }
+        return false;
+    }
+
+    /**
+     * 返回 hashmap 中的元素个数.
+     * 参数
+     *      name - hashmap 的名字.
+     * 返回值
+     *      出错则返回 false, 否则返回元素的个数, 0 表示不存在 hashmap(空).
+     */
+    public function hsize($name) {
+        if ($this->is_available()) {
+            return $this->_getConForKey($name)->hLen($name);
+        }
+        return false;
+    }
+
+    /**
+     * 返回整个 hashmap.
+     * 参数
+     *      name - hashmap 的名字.
+     * 返回值
+     *      如果出错则返回 false, 否则返回包含 key-value 的关联数组.
+     */
+    public function hgetall($name) {
+        if ($this->is_available()) {
+            return $this->_getConForKey($name)->hGetAll($name);
+        }
+        return false;
+    }
+
+    /**
+     * 批量设置 hashmap 中的 key-value.
+     * 参数
+     *        name - hashmap 的名字.
+     *        kvs - 包含 key-value 的关联数组 .
+     * 返回值
+     *        出错则返回 false, 其它值表示正常.
+     */
+    public function hsetall($name, $data) {
+        if ($this->is_available()) {
+            return $this->_getConForKey($name)->hMSet($name, $data);
+        }
+        return false;
+    }
+
+    /**
+     * 删除 hashmap 中的所有 key.
+     * 参数
+     *      name - hashmap 的名字.
+     * 返回值
+     *      如果出错则返回 false, 否则返回删除的 key 的数量.
+     */
+    public function hclear($name) {
+        if ($this->is_available()) {
+            return $this->_getConForKey($name)->del($name);
+        }
+        return false;
+    }
+
+    /**
      * 对指定键名设置锁标记（此锁并不对键值做修改限制,仅为键名的锁标记）;
      * 此方法可用于防止惊群现象发生,在get方法获取键值无效时,先判断键名是否有锁标记,
      * 如果已加锁,则不获取新值;
