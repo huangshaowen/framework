@@ -16,39 +16,27 @@ class Mongo extends DbDriver {
     protected $_cursor = null; // MongoCursor Object
     protected $comparison = array('neq' => 'ne', 'ne' => 'ne', 'gt' => 'gt', 'egt' => 'gte', 'gte' => 'gte', 'lt' => 'lt', 'elt' => 'lte', 'lte' => 'lte', 'in' => 'in', 'not in' => 'nin', 'nin' => 'nin');
 
-    /**
-     * 架构函数 读取数据库配置信息
-     * @access public
-     * @param array $config 数据库配置数组
-     */
-    public function __construct($config = '') {
-        if (!class_exists('mongoClient')) {
-            throw new Exception('当前环境不支持:mongoClient', 500);
+    public static function getInstance($db = 'mongo') {
+        static $obj = [];
+        if (!isset($obj[$db])) {
+            $obj[$db] = new self($db);
         }
-        if (!empty($config)) {
-            $this->config = array_merge($this->config, $config);
-            if (empty($this->config['params'])) {
-                $this->config['params'] = array();
-            }
-        }
+        return $obj[$db];
     }
 
     /**
      * 连接数据库方法
      * @access public
      */
-    public function connect($config = '', $linkNum = 0) {
-        if (!isset($this->linkID[$linkNum])) {
-            if (empty($config))
-                $config = $this->config;
-            $host = 'mongodb://' . ($config['username'] ? "{$config['username']}" : '') . ($config['password'] ? ":{$config['password']}@" : '') . $config['hostname'] . ($config['hostport'] ? ":{$config['hostport']}" : '') . '/' . ($config['database'] ? "{$config['database']}" : '');
-            try {
-                $this->linkID[$linkNum] = new \mongoClient($host, $this->config['params']);
-            } catch (\MongoConnectionException $e) {
-                throw new Exception('连接数据库服务器失败:' . $e->getMessage(), 500);
-            }
+    public function connect() {
+
+        try {
+            $this->link = new \mongoClient($this->db_config['dsn'], $this->db_config['params']);
+        } catch (\MongoConnectionException $e) {
+            throw new Exception('连接数据库服务器失败:' . $e->getMessage(), 500);
         }
-        return $this->linkID[$linkNum];
+
+        return $this->link;
     }
 
     /**
@@ -61,20 +49,18 @@ class Mongo extends DbDriver {
      */
     public function switchCollection($collection, $db = '', $master = true) {
         // 当前没有连接 则首先进行数据库连接
-        if (!$this->_linkID)
-            $this->initConnect($master);
+        if (!$this->link) {
+            $this->__connect();
+        }
+
         try {
             if (!empty($db)) { // 传入Db则切换数据库
                 // 当前MongoDb对象
                 $this->_dbName = $db;
-                $this->_mongo = $this->_linkID->selectDb($db);
+                $this->_mongo = $this->link->selectDb($db);
             }
             // 当前MongoCollection对象
-            if ($this->config['debug']) {
-                $this->queryStr = $this->_dbName . '.getCollection(' . $collection . ')';
-            }
             if ($this->_collectionName != $collection) {
-                $this->queryTimes++;
                 $this->_collection = $this->_mongo->selectCollection($collection);
                 $this->_collectionName = $collection; // 记录当前Collection名称
             }
@@ -100,11 +86,6 @@ class Mongo extends DbDriver {
     public function command($command = array(), $options = array()) {
 
         try {
-            if ($this->config['debug']) {
-                $this->queryStr = $this->_dbName . '.' . $this->_collectionName . '.runCommand(';
-                $this->queryStr .= json_encode($command);
-                $this->queryStr .= ')';
-            }
             $result = $this->_mongo->command($command);
 
             return $result;
@@ -135,9 +116,9 @@ class Mongo extends DbDriver {
      * @access public
      */
     public function close() {
-        if ($this->_linkID) {
-            $this->_linkID->close();
-            $this->_linkID = null;
+        if ($this->link) {
+            $this->link->close();
+            $this->link = null;
             $this->_mongo = null;
             $this->_collection = null;
             $this->_cursor = null;
