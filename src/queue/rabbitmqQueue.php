@@ -103,11 +103,13 @@ class rabbitmqQueue {
 
     /**
      * 延时队列加入数据
-     * @param type $queue_name
-     * @param type $data
-     * @param type $ttl
+     * @param   string      $queue_name         队列名称
+     * @param   array       $data               数据
+     * @param   int         $ttl                延时时间（单位秒,会影响后面的数据）
+     * @param   int         $delivery_mode      持久化模式(1内存、2硬盘)
+     * @return  boolean
      */
-    public function delay_qpush($queue_name = 'queue_task', $data = [], $ttl = 0) {
+    public function delay_qpush(string $queue_name = 'queue_task', array $data = [], int $ttl = 0, int $delivery_mode = 2) {
 
         $exchange_name = $this->getExchangeKey($queue_name);
 
@@ -133,12 +135,12 @@ class rabbitmqQueue {
         $body = $this->setValue($data);
 
         if ($ttl > 0) {
-            $msg = new \PhpAmqpLib\Message\AMQPMessage($body, ['expiration' => $ttl * 1000, 'delivery_mode' => 2]);
+            $msg = new \PhpAmqpLib\Message\AMQPMessage($body, ['expiration' => $ttl * 1000, 'delivery_mode' => $delivery_mode]);
             $this->channel->basic_publish($msg, "cache_{$exchange_name}", "cache_{$exchange_name}");
             return true;
         }
 
-        $msg = new \PhpAmqpLib\Message\AMQPMessage($body, ['expiration' => 100, 'delivery_mode' => 2]);
+        $msg = new \PhpAmqpLib\Message\AMQPMessage($body, ['expiration' => 100, 'delivery_mode' => $delivery_mode]);
         $this->channel->basic_publish($msg, "cache_{$exchange_name}", "cache_{$exchange_name}");
 
         return true;
@@ -148,9 +150,9 @@ class rabbitmqQueue {
      * 延时队列弹出队列数据
      * @param   string      $queue_name     队列名称
      * @param   int         $size           数量
-     * @return boolean/array
+     * @return  array
      */
-    public function delay_qpop($queue_name = 'queue_task', $size = 1) {
+    public function delay_qpop(string $queue_name = 'queue_task', int $size = 1) {
         /* 拉取的方式进行消费 */
         if ($size == 1) {
             return $this->delay_qpop_single($queue_name);
@@ -169,10 +171,10 @@ class rabbitmqQueue {
 
     /**
      * 延时队列弹出单条信息
-     * @param type $queue_name
+     * @param   string      $queue_name     队列名称
      * @return boolean
      */
-    protected function delay_qpop_single($queue_name = 'queue_task') {
+    protected function delay_qpop_single(string $queue_name = 'queue_task') {
 
         $exchange_name = $this->getExchangeKey($queue_name);
 
@@ -199,10 +201,10 @@ class rabbitmqQueue {
 
     /**
      * 延时队列查看未处理数量
-     * @param type $queue_name
+     * @param   string      $queue_name         队列名称
      * @return int
      */
-    public function delay_size($queue_name = 'queue_task') {
+    public function delay_size(string $queue_name = 'queue_task') {
         $exchange_name = $this->getExchangeKey($queue_name);
 
         $this->channel->exchange_declare($exchange_name, 'direct', false, false, false);
@@ -216,8 +218,8 @@ class rabbitmqQueue {
 
     /**
      * 延时队列消费
-     * @param string $queue_name
-     * @param callable $callback
+     * @param   string      $queue_name     队列名称
+     * @param   callable    $callback       回调方法
      */
     public function delay_consume(string $queue_name = 'queue_task', callable $callback) {
         $exchange_name = $this->getExchangeKey($queue_name);
@@ -239,11 +241,12 @@ class rabbitmqQueue {
 
     /**
      * 普通队列加入数据
-     * @param   string      $queue_name     队列名称
-     * @param   array       $data           数据
+     * @param   string      $queue_name         队列名称
+     * @param   array       $data               数据
+     * @param   int         $delivery_mode      持久化模式(1内存、2硬盘)
      * @return boolean
      */
-    public function qpush($queue_name = 'queue_task', $data = []) {
+    public function qpush(string $queue_name = 'queue_task', array $data = [], int $delivery_mode = 1) {
         $exchange_name = $this->getExchangeKey($queue_name);
 
         $this->channel->exchange_declare($exchange_name, 'direct', false, false, false); // 持久交换机
@@ -251,7 +254,7 @@ class rabbitmqQueue {
         $this->channel->queue_bind($queue_name, $exchange_name); //将队列与某个交换机进行绑定
 
         $body = $this->setValue($data);
-        $msg = new \PhpAmqpLib\Message\AMQPMessage($body, ['delivery_mode' => 1]);
+        $msg = new \PhpAmqpLib\Message\AMQPMessage($body, ['delivery_mode' => $delivery_mode]);
         $this->channel->basic_publish($msg, $exchange_name);
 
         return true;
@@ -259,11 +262,12 @@ class rabbitmqQueue {
 
     /**
      * 普通队列批量加入数据
-     * @param type $queue_name
-     * @param type $datas
+     * @param   string      $queue_name         队列名称
+     * @param   array       $datas              数据组
+     * @param   int         $delivery_mode      持久化模式(1内存、2硬盘)
      * @return boolean
      */
-    public function batch_qpush($queue_name = 'queue_task', $datas = []) {
+    public function batch_qpush(string $queue_name = 'queue_task', array $datas = [], int $delivery_mode = 1) {
         $exchange_name = $this->getExchangeKey($queue_name);
 
         $this->channel->exchange_declare($exchange_name, 'direct', false, false, false); // 持久交换机
@@ -275,7 +279,7 @@ class rabbitmqQueue {
 
         foreach ($datas as $key => $data) {
             $body = $this->setValue($data);
-            $msg = new \PhpAmqpLib\Message\AMQPMessage($body, ['delivery_mode' => 1]);
+            $msg = new \PhpAmqpLib\Message\AMQPMessage($body, ['delivery_mode' => $delivery_mode]);
 
             $this->channel->batch_basic_publish($msg, $exchange_name);
             $i++;
@@ -291,9 +295,9 @@ class rabbitmqQueue {
      * 普通队列弹出数据
      * @param   string      $queue_name     队列名称
      * @param   int         $size           数量
-     * @return boolean/array
+     * @return  array
      */
-    public function qpop($queue_name = 'queue_task', $size = 1) {
+    public function qpop(string $queue_name = 'queue_task', int $size = 1) {
         /* 拉取的方式进行消费 */
         if ($size == 1) {
             return $this->qpop_single($queue_name);
@@ -312,10 +316,10 @@ class rabbitmqQueue {
 
     /**
      * 普通队列弹出单条信息
-     * @param type $queue_name
+     * @param   string      $queue_name     队列名称
      * @return boolean
      */
-    protected function qpop_single($queue_name = 'queue_task') {
+    protected function qpop_single(string $queue_name = 'queue_task') {
 
         $exchange_name = $this->getExchangeKey($queue_name);
 
@@ -341,10 +345,10 @@ class rabbitmqQueue {
 
     /**
      * 普通队列未处理消息数量
-     * @param type $queue_name
+     * @param   string      $queue_name     队列名称
      * @return int
      */
-    public function size($queue_name = 'queue_task') {
+    public function size(string $queue_name = 'queue_task') {
         $exchange_name = $this->getExchangeKey($queue_name);
 
         $this->channel->exchange_declare($exchange_name, 'direct', false, false, false); // 持久交换机
@@ -356,8 +360,8 @@ class rabbitmqQueue {
 
     /**
      * 普通队列消费
-     * @param type $queue_name
-     * @param type $callback
+     * @param   string      $queue_name     队列名称
+     * @param   callable    $callback       回调方法
      */
     public function consume(string $queue_name = 'queue_task', callable $callback) {
         $exchange_name = $this->getExchangeKey($queue_name);
