@@ -187,15 +187,8 @@ class Request {
     /**
      * 架构函数
      * @access public
-     * @param  array  $options 参数
      */
-    public function __construct($options = []) {
-        foreach ($options as $name => $item) {
-            if (property_exists($this, $name)) {
-                $this->$name = $item;
-            }
-        }
-
+    public function __construct() {
         // 保存 php://input
         $this->input = file_get_contents('php://input');
     }
@@ -292,97 +285,6 @@ class Request {
      */
     public function get_user_agent() {
         return $this->server('HTTP_USER_AGENT');
-    }
-
-    /**
-     * 创建一个URL请求
-     * @param  string    $uri URL地址
-     * @param  string    $method 请求类型
-     * @param  array     $params 请求参数
-     * @param type $files
-     * @param type $server
-     * @param type $content
-     * @return $this
-     */
-    public function create($uri, $method = 'GET', $params = [], $files = [], $server = [], $content = null) {
-        $server['PATH_INFO'] = '';
-        $server['REQUEST_METHOD'] = strtoupper($method);
-        $info = parse_url($uri);
-
-        if (isset($info['host'])) {
-            $server['SERVER_NAME'] = $info['host'];
-            $server['HTTP_HOST'] = $info['host'];
-        }
-
-        if (isset($info['scheme'])) {
-            if ('https' === $info['scheme']) {
-                $server['HTTPS'] = 'on';
-                $server['SERVER_PORT'] = 443;
-            } else {
-                unset($server['HTTPS']);
-                $server['SERVER_PORT'] = 80;
-            }
-        }
-
-        if (isset($info['port'])) {
-            $server['SERVER_PORT'] = $info['port'];
-            $server['HTTP_HOST'] = $server['HTTP_HOST'] . ':' . $info['port'];
-        }
-
-        if (isset($info['user'])) {
-            $server['PHP_AUTH_USER'] = $info['user'];
-        }
-
-        if (isset($info['pass'])) {
-            $server['PHP_AUTH_PW'] = $info['pass'];
-        }
-
-        if (!isset($info['path'])) {
-            $info['path'] = '/';
-        }
-
-        $options = [];
-        $queryString = '';
-
-        $options[strtolower($method)] = $params;
-
-        if (isset($info['query'])) {
-            parse_str(html_entity_decode($info['query']), $query);
-            if (!empty($params)) {
-                $params = array_replace($query, $params);
-                $queryString = http_build_query($params, '', '&');
-            } else {
-                $params = $query;
-                $queryString = $info['query'];
-            }
-        } elseif (!empty($params)) {
-            $queryString = http_build_query($params, '', '&');
-        }
-
-        if ($queryString) {
-            parse_str($queryString, $get);
-            $options['get'] = isset($options['get']) ? array_merge($get, $options['get']) : $get;
-        }
-
-        $server['REQUEST_URI'] = $info['path'] . ('' !== $queryString ? '?' . $queryString : '');
-        $server['QUERY_STRING'] = $queryString;
-        $options['param'] = $params;
-        $options['file'] = $files;
-        $options['server'] = $server;
-        $options['url'] = $server['REQUEST_URI'];
-        $options['baseUrl'] = $info['path'];
-        $options['pathinfo'] = '/' == $info['path'] ? '/' : ltrim($info['path'], '/');
-        $options['method'] = $server['REQUEST_METHOD'];
-        $options['domain'] = isset($info['scheme']) ? $info['scheme'] . '://' . $server['HTTP_HOST'] : '';
-        $options['content'] = $content;
-
-        foreach ($options as $name => $item) {
-            if (property_exists($request, $name)) {
-                $this->$name = $item;
-            }
-        }
-
-        return $this;
     }
 
     /**
@@ -615,22 +517,20 @@ class Request {
      * @param  bool $float 是否使用浮点类型
      * @return integer|float
      */
-    public function time($float = false) {
-        return $float ? $_SERVER['REQUEST_TIME_FLOAT'] : $_SERVER['REQUEST_TIME'];
+    public function time(bool $float = false) {
+        return $float ? $this->server('REQUEST_TIME_FLOAT') : $this->server('REQUEST_TIME');
     }
 
     /**
      * 当前请求的资源类型
      * @access public
-     * @return false|string
+     * @return string
      */
-    public function type() {
+    public function type(): string {
         $accept = $this->server('HTTP_ACCEPT');
-
         if (empty($accept)) {
-            return false;
+            return '';
         }
-
         foreach ($this->mimeType as $key => $val) {
             $array = explode(',', $val);
             foreach ($array as $k => $v) {
@@ -639,8 +539,7 @@ class Request {
                 }
             }
         }
-
-        return false;
+        return '';
     }
 
     /**
@@ -690,83 +589,66 @@ class Request {
 
     /**
      * 是否为GET请求
-     * @access public
      * @return bool
      */
-    public function isGet() {
+    public function isGet(): bool {
         return $this->method() == 'GET';
     }
 
     /**
      * 是否为POST请求
-     * @access public
      * @return bool
      */
-    public function isPost() {
+    public function isPost(): bool {
         return $this->method() == 'POST';
     }
 
     /**
      * 是否为PUT请求
-     * @access public
      * @return bool
      */
-    public function isPut() {
+    public function isPut(): bool {
         return $this->method() == 'PUT';
     }
 
     /**
      * 是否为DELTE请求
-     * @access public
      * @return bool
      */
-    public function isDelete() {
+    public function isDelete(): bool {
         return $this->method() == 'DELETE';
     }
 
     /**
      * 是否为HEAD请求
-     * @access public
      * @return bool
      */
-    public function isHead() {
+    public function isHead(): bool {
         return $this->method() == 'HEAD';
     }
 
     /**
      * 是否为PATCH请求
-     * @access public
      * @return bool
      */
-    public function isPatch() {
+    public function isPatch(): bool {
         return $this->method() == 'PATCH';
     }
 
     /**
      * 是否为OPTIONS请求
-     * @access public
      * @return bool
      */
-    public function isOptions() {
+    public function isOptions(): bool {
         return $this->method() == 'OPTIONS';
     }
 
     /**
      * 是否为cli
-     * @access public
      * @return bool
      */
-    public function isCli() {
+    public function isCli(): bool {
         return PHP_SAPI == 'cli';
-    }
-
-    /**
-     * 是否为cgi
-     * @access public
-     * @return bool
-     */
-    public function isCgi() {
-        return strpos(PHP_SAPI, 'cgi') === 0;
     }
 
     /**
@@ -834,11 +716,11 @@ class Request {
     }
 
     /**
-     * 设置获取POST参数
+     * 获取POST参数
      * @access public
-     * @param  mixed         $name 变量名
-     * @param  mixed         $default 默认值
-     * @param  string|array  $filter 过滤方法
+     * @param  string|array $name 变量名
+     * @param  mixed        $default 默认值
+     * @param  string|array $filter 过滤方法
      * @return mixed
      */
     public function post($name = '', $default = null, $filter = '') {
@@ -875,14 +757,13 @@ class Request {
         return $this->input($this->put, $name, $default, $filter);
     }
 
-    protected function getInputData($content) {
-        if (false !== strpos($this->contentType(), 'application/json') || 0 === strpos($content, '{"')) {
+    protected function getInputData($content): array {
+        if (false !== strpos($this->contentType(), 'json')) {
             return (array) json_decode($content, true);
         } elseif (strpos($content, '=')) {
             parse_str($content, $data);
             return $data;
         }
-
         return [];
     }
 
@@ -1399,6 +1280,16 @@ class Request {
         }
 
         return false;
+    }
+
+    /**
+     * 当前是否JSON请求
+     * @access public
+     * @return bool
+     */
+    public function isJson(): bool {
+        $acceptType = $this->type();
+        return false !== strpos($acceptType, 'json');
     }
 
     /**
