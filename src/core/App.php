@@ -23,12 +23,8 @@ class App {
      */
     public function init() {
 
-        /* 自定义错误处理函数，设置后 error_reporting 将失效。因为要保证 ajax 输出格式，所以必须触发 error_handle */
-        set_error_handler("\\framework\\core\\ErrorOrException::ErrorHandle");
-        /* 异常处理类 */
-        set_exception_handler("\\framework\\core\\ErrorOrException::AppException");
-        /* 设置自定义捕获致命异常函数 */
-        register_shutdown_function("\\framework\\core\\ErrorOrException::FatalError");
+        /* 注册异常处理类 */
+        Error::register();
 
         /* 设置默认时区 */
         date_default_timezone_set('Asia/Shanghai');
@@ -145,10 +141,10 @@ class App {
         Config::getInstance()->load(APP_PATH . $this->app_name . '/config/');
 
         // 去除URL后缀
-        $_SERVER['PATH_INFO'] = preg_replace( "/\.html$/i", '', $_SERVER['PATH_INFO']);
-        $_SERVER['PATH_INFO'] = preg_replace( "/\.xml$/i", '', $_SERVER['PATH_INFO']);
+        $_SERVER['PATH_INFO'] = preg_replace("/\.html$/i", '', $_SERVER['PATH_INFO']);
+        $_SERVER['PATH_INFO'] = preg_replace("/\.xml$/i", '', $_SERVER['PATH_INFO']);
 
-        
+
         // 检测路由规则 如果没有则按默认规则调度URL
         if (!Route::routerCheck()) {
             /* 默认规则调度URL */
@@ -214,7 +210,7 @@ class App {
             $class_name = $this->app_name . "\\action\\_empty";
             if (!class_exists($class_name)) {
                 /* 显示 404 页面 */
-                ErrorOrException::show_404();
+                throw new Exception('class not exists:' . $class_name, 404);
             }
         }
 
@@ -224,7 +220,7 @@ class App {
                 $action = '_empty';
             } else {
                 /* 显示 404 页面 */
-                ErrorOrException::show_404();
+                throw new Exception("class {$class_name} not exists action:" . $action, 404);
             }
         }
 
@@ -241,8 +237,6 @@ class App {
         } catch (\ReflectionException $e) {
             throw new Exception($e->getTraceAsString(), 500);
         }
-
-        return false;
     }
 
     /**

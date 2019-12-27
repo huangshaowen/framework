@@ -2,8 +2,6 @@
 
 namespace framework\core;
 
-use framework\core\Exception;
-
 /**
  *  简单展示模板类
  */
