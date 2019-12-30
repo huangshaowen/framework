@@ -134,14 +134,7 @@ class Log {
         $now = date('Y-m-d H:i:s');
 
         if (php_sapi_name() == "cli") {
-            $debug = debug_backtrace();
-            $content = '';
-            foreach ($debug as $key => $val) {
-                if (isset($val["file"])) {
-                    $content .= $val["file"] . "  line  " . $val["line"] . "\r\n";
-                }
-            }
-            $content .= "{$now} : {$message}\r\n---------------------------------------------------------------cli\r\n\r\n";
+            $content = "{$now} : {$message}\r\n---------------------------------------------------------------cli\r\n\r\n";
         } else {
             $uri = Request::getInstance()->get_full_url();
             $source_url = Request::getInstance()->get_url_source();

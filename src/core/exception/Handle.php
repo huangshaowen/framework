@@ -6,6 +6,7 @@ use framework\core\Exception;
 use framework\core\Request;
 use framework\core\Response;
 use framework\core\Config;
+use Throwable;
 
 class Handle {
 
@@ -20,15 +21,14 @@ class Handle {
 
     /**
      * Report or log an exception.
-     * @param Exception $exception
      */
-    public function report(Exception $exception) {
+    public function report(Throwable $exception): void {
 
         if ($this->isIgnoreReport($exception)) {
             return;
         }
 
-        // 收集异常数据
+        /* 收集异常数据 */
         $data = [
             'file' => $exception->getFile(),
             'line' => $exception->getLine(),
@@ -37,68 +37,19 @@ class Handle {
         ];
         $log = "[{$data['code']}]{$data['message']}[{$data['file']}:{$data['line']}]";
 
-        $log .= "\r\n" . $exception->getTraceAsString();
+        $log .= PHP_EOL . $exception->getTraceAsString();
 
-        switch ($data['code']) {
-            case E_ERROR:
-            case E_PARSE:
-            case E_USER_ERROR:
-            case E_CORE_ERROR:
-            case E_COMPILE_ERROR:
-                // 记录到日志
-                \framework\core\Log::getInstance()->error($log);
-                break;
-            case E_WARNING:
-                // 记录到日志
-                \framework\core\Log::getInstance()->warning($log);
-                break;
-            case E_NOTICE:
-                // 记录到日志
-                \framework\core\Log::getInstance()->notice($log);
-                break;
-            default:
-                \framework\core\Log::getInstance()->info($log);
-                break;
+        $debug = debug_backtrace();
+        foreach ($debug as $key => $val) {
+            if (isset($val["file"])) {
+                $log .= PHP_EOL . $val["file"] . "  line  " . $val["line"];
+            }
         }
+
+        \framework\core\Log::getInstance()->error($log);
     }
 
-    public function report_error(ThrowableError $e) {
-
-        // 收集异常数据
-        $data = [
-            'file' => $e->getFile(),
-            'line' => $e->getLine(),
-            'message' => $e->getMessage(),
-            'code' => $e->getSeverity(),
-        ];
-        $log = "[{$data['code']}]{$data['message']}[{$data['file']}:{$data['line']}]";
-
-        $log .= "\r\n" . $e->getTraceAsString();
-
-        switch ($data['code']) {
-            case E_ERROR:
-            case E_PARSE:
-            case E_USER_ERROR:
-            case E_CORE_ERROR:
-            case E_COMPILE_ERROR:
-                // 记录到日志
-                \framework\core\Log::getInstance()->error($log);
-                break;
-            case E_WARNING:
-                // 记录到日志
-                \framework\core\Log::getInstance()->warning($log);
-                break;
-            case E_NOTICE:
-                // 记录到日志
-                \framework\core\Log::getInstance()->notice($log);
-                break;
-            default:
-                \framework\core\Log::getInstance()->info($log);
-                break;
-        }
-    }
-
-    protected function isIgnoreReport(Exception $exception) {
+    protected function isIgnoreReport(Throwable $exception) {
         foreach ($this->ignoreReport as $class) {
             if ($exception instanceof $class) {
                 return true;
@@ -109,69 +60,31 @@ class Handle {
 
     /**
      * Render an exception into an HTTP response.
-     *
-     * @access public
-     * @param  \Exception $e
-     * @return Response
+     * @param Throwable $e
+     * @return type
      */
-    public function render(Exception $e) {
-        if ($this->render && $this->render instanceof \Closure) {
-            $result = call_user_func_array($this->render, [$e]);
+    public function render(Throwable $e) {
 
-            if ($result) {
-                return $result;
-            }
+        if ($e instanceof HttpResponseException) {
+            return $e->getResponse();
         }
 
         return $this->show_exception($e);
     }
 
-    public function render_error(ThrowableError $e) {
-        if ($this->render && $this->render instanceof \Closure) {
-            $result = call_user_func_array($this->render, [$e]);
-
-            if ($result) {
-                return $result;
-            }
-        }
-
+    public function renderForCLI(Throwable $exception) {
+        /* 收集异常数据 */
         $data = [
-            'code' => $e->getCode(),
-            'filepath' => $e->getFile(),
-            'line' => $e->getLine(),
-            'message' => $e->getMessage(),
+            'file' => $exception->getFile(),
+            'line' => $exception->getLine(),
+            'message' => $this->getMessage($exception),
+            'code' => $this->getCode($exception),
         ];
+        $log = "[{$data['code']}]{$data['message']}[{$data['file']}:{$data['line']}]";
 
-        /* 隐藏目录 */
-        $data['filepath'] = str_replace($_SERVER['DOCUMENT_ROOT'], '', $data['filepath']);
+        $log .= PHP_EOL . $exception->getTraceAsString();
 
-        if (Request::getInstance()->isAjax() == true) {
-            $json = json_encode(['ret' => $data['code'], 'data' => null, 'msg' => $data['message']]);
-            return Response::getInstance()->clear()->contentType("application/json")->write($json)->send();
-        }
-
-        //保留一层
-        while (ob_get_level() > 1) {
-            ob_end_clean();
-        }
-
-        /* 模板展示Html */
-        ob_start();
-        extract($data);
-        $templates_path = Config::getInstance()->get('error_views_path');
-        if (empty($templates_path)) {
-            $templates_path = __DIR__ . '/../../tpl/';
-        }
-        $file = $templates_path . 'error_php.tpl.php';
-        include($file);
-
-        // 获取并清空缓存
-        $content = ob_get_clean();
-        return Response::getInstance()->status(200)->write($content)->send();
-    }
-
-    public function renderForCLI(Exception $e) {
-        
+        echo $log . PHP_EOL;
     }
 
     /**
@@ -179,9 +92,9 @@ class Handle {
      * @param  Exception $exception
      * @return Response
      */
-    protected function show_exception(Exception $exception) {
+    protected function show_exception(Throwable $exception) {
 
-        // 收集异常数据
+        /* 收集异常数据 */
         $data = [
             'name' => get_class($exception),
             'filepath' => $exception->getFile(),
@@ -192,10 +105,10 @@ class Handle {
 
         if (Request::getInstance()->isAjax() == true) {
             $json = json_encode(['ret' => $data['code'], 'data' => null, 'msg' => $data['message']]);
-            return Response::getInstance()->clear()->contentType("application/json")->write($json);
+            return Response::getInstance()->clear()->status(200)->contentType("application/json")->write($json)->send();
         }
 
-        //保留一层
+        /* 保留一层 */
         while (ob_get_level() > 1) {
             ob_end_clean();
         }
@@ -213,9 +126,15 @@ class Handle {
         $file = $templates_path . 'error_php.tpl.php';
         include($file);
 
-        // 获取并清空缓存
+        /* 获取并清空缓存 */
         $content = ob_get_clean();
-        return Response::getInstance()->status(200)->write($content);
+
+        switch ($data['code']) {
+            case 0:
+                return Response::getInstance()->status(200)->write($content)->send();
+            default:
+                return Response::getInstance()->status($data['code'])->write($content)->send();
+        }
     }
 
     /**
@@ -225,7 +144,7 @@ class Handle {
      * @param  \Exception $exception
      * @return integer                错误编码
      */
-    protected function getCode(Exception $exception) {
+    protected function getCode(Throwable $exception) {
         $code = $exception->getCode();
 
         if (!$code && $exception instanceof ErrorException) {
@@ -239,10 +158,10 @@ class Handle {
      * 获取错误信息
      * ErrorException则使用错误级别作为错误编码
      * @access protected
-     * @param  \Exception $exception
+     * @param Throwable $exception
      * @return string                错误信息
      */
-    protected function getMessage(Exception $exception) {
+    protected function getMessage(Throwable $exception): string {
         return $exception->getMessage();
     }
 
@@ -253,8 +172,8 @@ class Handle {
      * @param  \Exception $exception
      * @return array                 错误文件内容
      */
-    protected function getSourceCode(Exception $exception) {
-        // 读取前9行和后9行
+    protected function getSourceCode(Throwable $exception) {
+// 读取前9行和后9行
         $line = $exception->getLine();
         $first = ($line - 9 > 0) ? $line - 9 : 1;
 
@@ -278,7 +197,7 @@ class Handle {
      * @param  \Exception $exception
      * @return array                 异常类定义的扩展数据
      */
-    protected function getExtendData(Exception $exception) {
+    protected function getExtendData(Throwable $exception) {
         $data = [];
 
         if ($exception instanceof \framework\core\Exception) {

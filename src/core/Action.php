@@ -143,7 +143,30 @@ abstract class Action {
      * Sends an HTTP 404 response when a URL is not found.
      */
     public function not_found() {
-        ErrorOrException::show_404();
+        $heading = '404 Page Not Found';
+        $message = 'The page you requested was not found.';
+
+        if ((Request::getInstance()->isAjax() == true) || Request::getInstance()->isCli() == true) {
+            $json = [
+                'ret' => 404,
+                'data' => null,
+                'msg' => $message
+            ];
+            return Response::getInstance()->json($json);
+        }
+
+        $templates_path = Config::getInstance()->get('error_views_path');
+
+        if (empty($templates_path)) {
+            $templates_path = __DIR__ . '/../tpl/';
+        }
+
+        View::getInstance()->assign('heading', $heading);
+        View::getInstance()->assign('message', $message);
+
+        $buffer = View::getInstance()->fetch('error_404.tpl.php', $templates_path);
+
+        Response::getInstance()->write($buffer)->send();
     }
 
     /**
@@ -211,7 +234,7 @@ abstract class Action {
             $data['data'] = $jumpUrl;
             return Response::getInstance()->json($data);
         }
-        
+
         // 默认停留3秒
         $this->assign('waitSecond', 3);
 
