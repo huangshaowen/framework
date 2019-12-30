@@ -114,7 +114,7 @@ class ssdbService {
     }
 
     /**
-     *  操作次数限制函数: 限制 uid 在 period 秒内能操作 action 最多 max_count 次.
+     *  操作次数限制函数,采用计数次: 限制 uid 在 period 秒内能操作 action 最多 max_count 次.
      *  如果超过限制, 返回 false.
      * @param type $uid
      * @param type $action
@@ -126,19 +126,10 @@ class ssdbService {
         $now = time();
         $expire = intval($now / $period) * $period + $period;
         $ttl = $expire - $now;
-
-        //将时间戳写入有序集合里面
-        $zname = "act_limit:{$uid}:{$action}:nums";
-        $key = $this->get_js_timestamp();
-        $this->zset($zname, $key, $now);
-
-        /* 删除过期的数据 */
-        $end_time = $now - $ttl;
-        $this->zremrangebyscore($zname, 0, $end_time);
-
-        /* 获取里面剩下请求个数 */
-        $request_nums = $this->zsize($zname);
-        if ($request_nums > $max_count) {
+        $key = 'act_limit:' . md5("{$uid}|{$action}");
+        $count = $this->_getConForKey($key)->incr($key);
+        $this->_getConForKey($key)->expire($key, $ttl);
+        if ($count === false || $count > $max_count) {
             return false;
         }
         return true;

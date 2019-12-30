@@ -685,7 +685,7 @@ class Redis {
     }
 
     /**
-     *  操作次数限制函数: 限制 uid 在 period 秒内能操作 action 最多 max_count 次.
+     *  操作次数限制函数,采用滑动窗口: 限制 uid 在 period 秒内能操作 action 最多 max_count 次.
      *  如果超过限制, 返回 false.
      * @param type $uid
      * @param type $action
@@ -712,6 +712,28 @@ class Redis {
         $replies = $pipe->exec();
 
         return $replies[2] <= $max_count;
+    }
+
+    /**
+     *  操作次数限制函数,采用计数次: 限制 uid 在 period 秒内能操作 action 最多 max_count 次.
+     *  如果超过限制, 返回 false.
+     * @param type $uid
+     * @param type $action
+     * @param type $max_count
+     * @param type $period
+     * @return boolean
+     */
+    public function act_count_limit($uid, $action, $max_count, $period) {
+        $now = time();
+        $expire = intval($now / $period) * $period + $period;
+        $ttl = $expire - $now;
+        $key = 'act_limit:' . md5("{$uid}|{$action}");
+        $count = $this->_getConForKey($key)->incrby($key, 1);
+        $this->_getConForKey($key)->expire($key, $ttl);
+        if ($count === false || $count > $max_count) {
+            return false;
+        }
+        return true;
     }
 
     /**

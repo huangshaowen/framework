@@ -104,6 +104,13 @@ class Handle {
         ];
 
         if (Request::getInstance()->isAjax() == true) {
+
+            switch ($data['code']) {
+                case 0:
+                    $data['code'] = 500;
+                default:
+            }
+
             $json = json_encode(['ret' => $data['code'], 'data' => null, 'msg' => $data['message']]);
             return Response::getInstance()->clear()->status(200)->contentType("application/json")->write($json)->send();
         }
