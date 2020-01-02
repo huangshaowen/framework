@@ -396,8 +396,9 @@ class Redis {
      *      出错则返回 false, 其它值表示正常.
      */
     public function hset($name, $k, $v) {
+        $cache_id = $this->getCacheKey($name);
         if ($this->is_available()) {
-            return $this->_getConForKey($name)->hSet($name, $k, $v);
+            return $this->_getConForKey($cache_id)->hSet($cache_id, $k, $v);
         }
         return false;
     }
@@ -411,8 +412,10 @@ class Redis {
      *      如果 key 不存在则返回 null, 如果出错则返回 false, 否则返回 key 对应的值内容.
      */
     public function hget($name, $k) {
+        $cache_id = $this->getCacheKey($name);
+
         if ($this->is_available()) {
-            return $this->_getConForKey($name)->hGet($name, $k);
+            return $this->_getConForKey($cache_id)->hGet($cache_id, $k);
         }
         return false;
     }
@@ -426,8 +429,10 @@ class Redis {
      *      如果出错则返回 false, 其它值表示正常. 你无法通过返回值来判断被删除的 key 是否存在.
      */
     public function hdel($name, $k) {
+        $cache_id = $this->getCacheKey($name);
+
         if ($this->is_available()) {
-            return $this->_getConForKey($name)->hDel($name, $k);
+            return $this->_getConForKey($cache_id)->hDel($cache_id, $k);
         }
         return false;
     }
@@ -442,9 +447,11 @@ class Redis {
      *      如果出错则返回 false, 否则返回新的值.
      */
     public function hincr($name, $k, $v) {
+        $cache_id = $this->getCacheKey($name);
+
         if ($this->is_available()) {
             $v = intval($v);
-            return $this->_getConForKey($name)->hIncrBy($name, $k, $v);
+            return $this->_getConForKey($cache_id)->hIncrBy($cache_id, $k, $v);
         }
         return false;
     }
@@ -458,8 +465,10 @@ class Redis {
      *      如果存在, 返回 true, 否则返回 false.
      */
     public function hexists($name, $k) {
+        $cache_id = $this->getCacheKey($name);
+
         if ($this->is_available()) {
-            return $this->_getConForKey($name)->hExists($name, $k);
+            return $this->_getConForKey($cache_id)->hExists($cache_id, $k);
         }
         return false;
     }
@@ -472,8 +481,10 @@ class Redis {
      *      出错则返回 false, 否则返回元素的个数, 0 表示不存在 hashmap(空).
      */
     public function hsize($name) {
+        $cache_id = $this->getCacheKey($name);
+
         if ($this->is_available()) {
-            return $this->_getConForKey($name)->hLen($name);
+            return $this->_getConForKey($cache_id)->hLen($cache_id);
         }
         return false;
     }
@@ -486,8 +497,10 @@ class Redis {
      *      如果出错则返回 false, 否则返回包含 key-value 的关联数组.
      */
     public function hgetall($name) {
+        $cache_id = $this->getCacheKey($name);
+
         if ($this->is_available()) {
-            return $this->_getConForKey($name)->hGetAll($name);
+            return $this->_getConForKey($cache_id)->hGetAll($cache_id);
         }
         return false;
     }
@@ -501,8 +514,11 @@ class Redis {
      *        出错则返回 false, 其它值表示正常.
      */
     public function hsetall($name, $data) {
+
+        $cache_id = $this->getCacheKey($name);
+
         if ($this->is_available()) {
-            return $this->_getConForKey($name)->hMSet($name, $data);
+            return $this->_getConForKey($cache_id)->hMSet($cache_id, $data);
         }
         return false;
     }
@@ -515,8 +531,10 @@ class Redis {
      *      如果出错则返回 false, 否则返回删除的 key 的数量.
      */
     public function hclear($name) {
+        $cache_id = $this->getCacheKey($name);
+
         if ($this->is_available()) {
-            return $this->_getConForKey($name)->del($name);
+            return $this->_getConForKey($cache_id)->del($cache_id);
         }
         return false;
     }
