@@ -1069,6 +1069,124 @@ class Redis {
     }
 
     /**
+     * Redis 集合命令
+     */
+
+    /**
+     * Redis Sadd 命令将一个或多个成员元素加入到集合中，已经存在于集合的成员元素将被忽略。
+     * @param type $name
+     * @param type $v
+     * @return boolean
+     */
+    public function sadd(string $name, $v) {
+        $cache_id = $this->getCacheKey($name);
+        if ($this->is_available()) {
+            return $this->_getConForKey($cache_id)->sAdd($cache_id, $v);
+        }
+        return false;
+    }
+
+    /**
+     * 获取集合的成员数
+     * @param type $name
+     * @return boolean
+     */
+    public function ssize(string $name) {
+        $cache_id = $this->getCacheKey($name);
+        if ($this->is_available()) {
+            return $this->_getConForKey($cache_id)->sCard($cache_id);
+        }
+        return false;
+    }
+
+    /**
+     * 集合之间的差集,如果两个集合不在同一台服务器，返回结果会出错
+     * @param string $name1
+     * @param string $name2
+     */
+    public function sdiff(string $name1, string $name2) {
+        $cache_id1 = $this->getCacheKey($name1);
+        $cache_id2 = $this->getCacheKey($name2);
+
+        if ($this->is_available()) {
+            return $this->_getConForKey($cache_id1)->sDiff($cache_id1, $cache_id2);
+        }
+
+        return false;
+    }
+
+    /**
+     * 集合之间的交集,如果两个集合不在同一台服务器，返回结果会出错
+     * @param string $name1
+     * @param string $name2
+     */
+    public function sinter(string $name1, string $name2) {
+        $cache_id1 = $this->getCacheKey($name1);
+        $cache_id2 = $this->getCacheKey($name2);
+
+        if ($this->is_available()) {
+            return $this->_getConForKey($cache_id1)->sInter($cache_id1, $cache_id2);
+        }
+        return false;
+    }
+
+    /**
+     * 集合之间的并集,如果两个集合不在同一台服务器，返回结果会出错
+     * @param string $name1
+     * @param string $name2
+     */
+    public function sunion(string $name1, string $name2) {
+        $cache_id1 = $this->getCacheKey($name1);
+        $cache_id2 = $this->getCacheKey($name2);
+
+        if ($this->is_available()) {
+            return $this->_getConForKey($cache_id1)->sUnion($cache_id1, $cache_id2);
+        }
+        return false;
+    }
+
+    /**
+     * 返回集合中的所有成员
+     * @param string $name
+     * @return boolean
+     */
+    public function smembers(string $name) {
+        $cache_id = $this->getCacheKey($name);
+        if ($this->is_available()) {
+            return $this->_getConForKey($cache_id)->sMembers($cache_id);
+        }
+        return false;
+    }
+
+    /**
+     * 移除集合中的一个或多个随机元素，移除后会返回移除的元素
+     * @param string $name
+     * @param int $size
+     * @return boolean
+     */
+    public function spop(string $name, int $size = 1) {
+        $cache_id = $this->getCacheKey($name);
+        if ($this->is_available()) {
+            return $this->_getConForKey($cache_id)->sPop($cache_id, $size);
+        }
+        return false;
+    }
+
+    /**
+     * 移除集合中指定 key
+     * @param type $name
+     * @param type $v
+     * @return boolean
+     */
+    public function sdel($name, $v) {
+        $cache_id = $this->getCacheKey($name);
+        if ($this->is_available()) {
+            return $this->_getConForKey($cache_id)->sRem($cache_id, $v);
+        }
+        return false;
+    }
+
+    /**
      * 最好能保证它能最后析构!
      * 关闭连接
      */
