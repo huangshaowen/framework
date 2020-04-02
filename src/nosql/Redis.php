@@ -971,7 +971,7 @@ class Redis {
      */
     public function zsize($name) {
         if ($this->is_available()) {
-            return $this->_getConForKey($name)->zSize($name);
+            return $this->_getConForKey($name)->zCard($name);
         }
         return false;
     }

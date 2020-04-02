@@ -5,19 +5,19 @@ namespace framework\queue;
 use framework\core\Config;
 
 /**
- * 
+ *
  * https://www.rabbitmq.com/
- * 
- * 
+ *
+ *
  * https://github.com/php-amqplib/php-amqplib
- * 
- * 
+ *
+ *
   队列配置示例
   'rabbitmq' => ['host' => '127.0.0.1', 'port' => '5672', 'user' => 'guest', 'password' => 'guest', 'vhost' => '/'],
- * 
+ *
  * 注意事项：
  * 队列名只能有一种属性，不支持普通与延时队列混用
- * 
+ *
  */
 class rabbitmqQueue {
 
