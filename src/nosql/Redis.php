@@ -922,7 +922,7 @@ class Redis {
      */
     public function zdel($name, $k) {
         if ($this->is_available()) {
-            return $this->_getConForKey($name)->zDelete($name, $k);
+            return $this->_getConForKey($name)->zRem($name, $k);
         }
         return false;
     }
