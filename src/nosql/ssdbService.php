@@ -1370,6 +1370,20 @@ class ssdbService {
         return false;
     }
 
+    public function batch($name) {
+        if ($this->is_available()) {
+            return $this->_getConForKey($name)->batch();
+        }
+        return false;
+    }
+
+    public function exec($name) {
+        if ($this->is_available()) {
+            return $this->_getConForKey($name)->exec();
+        }
+        return false;
+    }
+
     /**
      * 最好能保证它能最后析构!
      * 关闭连接

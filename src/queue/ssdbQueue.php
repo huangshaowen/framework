@@ -53,7 +53,7 @@ class ssdbQueue {
         return $value;
     }
 
-    protected function getQueueKey($queue_name) {
+    protected function getQueueKey(string $queue_name) {
         if (empty($queue_name)) {
             throw new \LengthException('队列名称不能为空', 410);
         }
@@ -66,10 +66,34 @@ class ssdbQueue {
      * @param   array       $data           数据
      * @return boolean
      */
-    public function qpush($queue_name = 'queue_task', $data = []) {
+    public function qpush(string $queue_name = 'queue_task', array $data = []) {
         $queue_name = $this->getQueueKey($queue_name);
 
         return ssdbService::getInstance()->qpush($queue_name, $this->setValue($data));
+    }
+
+    /**
+     * 批量加入队列
+     * @param string $queue_name
+     * @param array $data
+     * @return boolean
+     */
+    public function batch_qpush(string $queue_name = 'queue_task', array $data = []) {
+        $queue_name = $this->getQueueKey($queue_name);
+
+//        ssdbService::getInstance()->batch($queue_name);
+
+        if (empty($data)) {
+            return false;
+        }
+
+        foreach ($data as $key => $value) {
+            ssdbService::getInstance()->qpush($queue_name, $this->setValue($value));
+        }
+
+//        ssdbService::getInstance()->exec($queue_name);
+
+        return true;
     }
 
     /**

@@ -174,7 +174,7 @@ class delayQueue {
 
         /* 加锁 */
         $lock_key = "move_to_queue_{$zname}";
-        $rs = Redis::getInstance()->lock($lock_key, 10);
+        $rs = Redis::getInstance()->lock($lock_key, 5);
         if ($rs == false) {
             /* 加锁失败 */
             return false;
@@ -183,7 +183,7 @@ class delayQueue {
         /* 获取数据 */
         $score_end = time();
         $score_start = $score_end - 365 * 24 * 3600;
-        $size = ($size > 100 && $size <= 0) ? 100 : $size;
+        $size = ($size > 1000 && $size <= 0) ? 1000 : $size;
         $items = ssdbService::getInstance()->zscan($zname, '', $score_start, $score_end, $size);
         if ($items) {
             foreach ($items as $id => $time) {
