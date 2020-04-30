@@ -1015,7 +1015,7 @@ class ssdbService {
      */
     public function zpop_back($name, $limit) {
         if ($this->is_available()) {
-            return $this->_getConForKey($name)->zpop_front($name, $limit);
+            return $this->_getConForKey($name)->zpop_back($name, $limit);
         }
         return false;
     }
