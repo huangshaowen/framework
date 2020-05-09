@@ -17,15 +17,8 @@ class Session {
      */
     public function init() {
 
-        $type = Config::getInstance()->get('SESSION_TYPE') ? Config::getInstance()->get('SESSION_TYPE') : 'redis';
-
-        $class = strpos($type, '\\') ? $type : 'framework\\session\\' . $type . 'Driver';
-        if (!class_exists($class)) {
-            throw new Exception('error session handler:' . $class);
-        }
-
         /* 采用 NoSQL 保存 session */
-        session_set_save_handler(new $class());
+        session_set_save_handler(new \framework\session\redisDriver());
 
         /* 启动session */
         session_start();

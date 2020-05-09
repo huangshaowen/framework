@@ -556,9 +556,10 @@ class Redis {
             $ttl = 1;
         }
 
+        $lockValue = time() + $ttl;
+
         try {
-            // 有时间限制
-            return $this->_getConForKey($key)->set($key, 1, array('nx', 'ex' => $ttl));
+            return $this->_getConForKey($key)->set($key, $lockValue, ['nx', 'ex' => $ttl]);
         } catch (Exception $ex) {
             //连接状态置为false
             $this->isConnected = false;
