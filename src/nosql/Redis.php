@@ -546,7 +546,7 @@ class Redis {
      * 如果未加锁,则先设置锁，若设置失败说明锁已存在，若设置成功则获取新值,设置新的缓存
      * @param string $cache_id   键名
      * @param int $ttl     加锁时间
-     * @return boolean      是否成功
+     * @return boolean      值或false
      */
     public function lock($cache_id, $ttl = 5) {
         $key = "lock_{$cache_id}";
@@ -556,27 +556,37 @@ class Redis {
             $ttl = 1;
         }
 
-        $lockValue = time() + $ttl;
+        $lock_value = time() + $ttl;
 
         try {
-            return $this->_getConForKey($key)->set($key, $lockValue, ['nx', 'ex' => $ttl]);
+            $rs = $this->_getConForKey($key)->set($key, $lock_value, ['nx', 'ex' => $ttl]);
+            if ($rs) {
+                return $lock_value;
+            }
         } catch (Exception $ex) {
             //连接状态置为false
             $this->isConnected = false;
             $this->is_available();
         }
+        
         return false;
     }
 
     /**
      * 对指定键名移除锁标记
-     * @param string $cache_id      键名
-     * @return boolean              是否成功
+     * @param string    $cache_id       锁名称
+     * @param int       $lock_value     值
+     * @return boolean
      */
-    public function unlock($cache_id) {
+    public function unlock($cache_id, $lock_value) {
         $key = "lock_{$cache_id}";
 
-        return $this->simple_delete($key);
+        $rs = $this->simple_get($cache_id);
+        if ($rs == $lock_value) {
+            return $this->simple_delete($key);
+        }
+
+        return false;
     }
 
     /**
