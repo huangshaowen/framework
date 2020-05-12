@@ -110,8 +110,8 @@ class delayQueue {
 
         /* 加锁 */
         $lock_key = "qpop_{$zname}";
-        $rs = Redis::getInstance()->lock($lock_key, 10);
-        if ($rs == false) {
+        $lock_value = Redis::getInstance()->lock($lock_key, 10);
+        if ($lock_value == false) {
             /* 加锁失败 */
             return false;
         }
@@ -144,7 +144,7 @@ class delayQueue {
         ssdbService::getInstance()->zset('delay_queue', $queue_name, $total);
 
         /* 解锁 */
-        Redis::getInstance()->unlock($lock_key);
+        Redis::getInstance()->unlock($lock_key, $lock_value);
 
         /* 返回 */
         if (empty($return_data)) {
@@ -174,8 +174,8 @@ class delayQueue {
 
         /* 加锁 */
         $lock_key = "move_to_queue_{$zname}";
-        $rs = Redis::getInstance()->lock($lock_key, 5);
-        if ($rs == false) {
+        $lock_value = Redis::getInstance()->lock($lock_key, 5);
+        if ($lock_value == false) {
             /* 加锁失败 */
             return false;
         }
@@ -209,7 +209,7 @@ class delayQueue {
         ssdbService::getInstance()->zset('delay_queue', $queue_name, $total);
 
         /* 解锁 */
-        Redis::getInstance()->unlock($lock_key);
+        Redis::getInstance()->unlock($lock_key, $lock_value);
 
         /* 返回 */
         return true;
