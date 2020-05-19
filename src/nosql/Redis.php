@@ -132,9 +132,8 @@ class Redis {
 
             if (!$this->isConnected) {
                 $this->reConnected++;
-            }
-            //如果重连成功,重连次数置为0
-            else {
+            } else {
+                //如果重连成功,重连次数置为0
                 $this->reConnected = 0;
             }
         }
@@ -568,7 +567,7 @@ class Redis {
             $this->isConnected = false;
             $this->is_available();
         }
-        
+
         return false;
     }
 
@@ -1091,10 +1090,7 @@ class Redis {
      */
     public function sadd(string $name, $v) {
         $cache_id = $this->getCacheKey($name);
-        if ($this->is_available()) {
-            return $this->_getConForKey($cache_id)->sAdd($cache_id, $v);
-        }
-        return false;
+        return $this->_getConForKey($cache_id)->sAdd($cache_id, $v);
     }
 
     /**
@@ -1104,10 +1100,8 @@ class Redis {
      */
     public function ssize(string $name) {
         $cache_id = $this->getCacheKey($name);
-        if ($this->is_available()) {
-            return $this->_getConForKey($cache_id)->sCard($cache_id);
-        }
-        return false;
+
+        return $this->_getConForKey($cache_id)->sCard($cache_id);
     }
 
     /**
@@ -1119,11 +1113,7 @@ class Redis {
         $cache_id1 = $this->getCacheKey($name1);
         $cache_id2 = $this->getCacheKey($name2);
 
-        if ($this->is_available()) {
-            return $this->_getConForKey($cache_id1)->sDiff($cache_id1, $cache_id2);
-        }
-
-        return false;
+        return $this->_getConForKey($cache_id1)->sDiff($cache_id1, $cache_id2);
     }
 
     /**
@@ -1135,10 +1125,7 @@ class Redis {
         $cache_id1 = $this->getCacheKey($name1);
         $cache_id2 = $this->getCacheKey($name2);
 
-        if ($this->is_available()) {
-            return $this->_getConForKey($cache_id1)->sInter($cache_id1, $cache_id2);
-        }
-        return false;
+        return $this->_getConForKey($cache_id1)->sInter($cache_id1, $cache_id2);
     }
 
     /**
@@ -1150,10 +1137,7 @@ class Redis {
         $cache_id1 = $this->getCacheKey($name1);
         $cache_id2 = $this->getCacheKey($name2);
 
-        if ($this->is_available()) {
-            return $this->_getConForKey($cache_id1)->sUnion($cache_id1, $cache_id2);
-        }
-        return false;
+        return $this->_getConForKey($cache_id1)->sUnion($cache_id1, $cache_id2);
     }
 
     /**
@@ -1163,24 +1147,7 @@ class Redis {
      */
     public function smembers(string $name) {
         $cache_id = $this->getCacheKey($name);
-        if ($this->is_available()) {
-            return $this->_getConForKey($cache_id)->sMembers($cache_id);
-        }
-        return false;
-    }
-
-    /**
-     * 移除集合中的一个或多个随机元素，移除后会返回移除的元素
-     * @param string $name
-     * @param int $size
-     * @return boolean
-     */
-    public function spop(string $name, int $size = 1) {
-        $cache_id = $this->getCacheKey($name);
-        if ($this->is_available()) {
-            return $this->_getConForKey($cache_id)->sPop($cache_id, $size);
-        }
-        return false;
+        return $this->_getConForKey($cache_id)->sMembers($cache_id);
     }
 
     /**
@@ -1191,10 +1158,7 @@ class Redis {
      */
     public function sdel($name, $v) {
         $cache_id = $this->getCacheKey($name);
-        if ($this->is_available()) {
-            return $this->_getConForKey($cache_id)->sRem($cache_id, $v);
-        }
-        return false;
+        return $this->_getConForKey($cache_id)->sRem($cache_id, $v);
     }
 
     /**
