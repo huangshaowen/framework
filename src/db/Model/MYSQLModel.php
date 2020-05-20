@@ -2,7 +2,6 @@
 
 namespace framework\db\Model;
 
-use framework\db\Driver\MySQL;
 use framework\nosql\Redis;
 use framework\core\Exception;
 
@@ -70,7 +69,7 @@ class MYSQLModel {
         }
         $this->dbName = $connection;
         // 数据库初始化操作
-        $this->db = MySQL::getInstance($connection);
+        $this->db = \framework\db\Driver\Mysql::getInstance($connection);
     }
 
     /**
