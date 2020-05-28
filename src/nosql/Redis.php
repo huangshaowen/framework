@@ -40,13 +40,13 @@ class Redis {
      */
     private $maxReConnected = 3;
 
-    public function __construct() {
+    public function __construct($conf_name = 'redis_cache') {
 
         if (!extension_loaded('redis')) {
             throw new Exception('当前环境不支持: redis');
         }
 
-        $this->conf = Config::getInstance()->get('redis_cache');
+        $this->conf = Config::getInstance()->get($conf_name);
 
         if (empty($this->conf)) {
             throw new Exception('请配置 redis !');
@@ -55,12 +55,18 @@ class Redis {
         $this->connect();
     }
 
-    public static function getInstance() {
-        static $obj;
-        if (!$obj) {
-            $obj = new self();
+    /**
+     * 　单实例化
+     * @staticvar array $obj
+     * @param type $conf_name
+     * @return \self
+     */
+    public static function getInstance($conf_name = 'redis_cache') {
+        static $obj = [];
+        if (!isset($obj[$conf_name])) {
+            $obj[$conf_name] = new self($conf_name);
         }
-        return $obj;
+        return $obj[$conf_name];
     }
 
     private function connect() {
