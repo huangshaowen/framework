@@ -4,19 +4,30 @@ namespace framework\queue;
 
 use framework\core\Exception;
 use framework\nosql\Redis;
-use framework\nosql\ssdbService;
 
 /**
  * 延时队列
  */
 class delayQueue {
 
-    public static function getInstance() {
-        static $obj;
-        if (!$obj) {
-            $obj = new self();
+    private $ssdb;
+
+    /**
+     * 　单实例化
+     * @staticvar array $obj
+     * @param type $conf_name
+     * @return \self
+     */
+    public static function getInstance($conf_name = 'ssdb_mq') {
+        static $obj = [];
+        if (!isset($obj[$conf_name])) {
+            $obj[$conf_name] = new self($conf_name);
         }
-        return $obj;
+        return $obj[$conf_name];
+    }
+
+    public function __construct($conf_name = 'ssdb_mq') {
+        $this->ssdb = \framework\nosql\ssdbService::getInstance($conf_name);
     }
 
     /**
@@ -70,21 +81,21 @@ class delayQueue {
         $hname = "delay_queue_{$queue_name}";
 
         /* 记录队列顺序 */
-        $id = ssdbService::getInstance()->zincr('tickets_id', 'delay_queue_id', 1);
+        $id = $this->ssdb->zincr('tickets_id', 'delay_queue_id', 1);
         if ($id == PHP_INT_MAX) {
             $id = 1;
-            ssdbService::getInstance()->zset('tickets_id', 'delay_queue_id', 1);
+            $this->ssdb->zset('tickets_id', 'delay_queue_id', 1);
         }
 
         /* 记录数据 */
         /* 修正延时 */
         $ttl = ($ttl <= 0) ? 10 : $ttl;
         $time = time() + $ttl;
-        ssdbService::getInstance()->zset($zname, $id, $time);
-        ssdbService::getInstance()->hset($hname, $id, $this->setValue($data));
+        $this->ssdb->zset($zname, $id, $time);
+        $this->ssdb->hset($hname, $id, $this->setValue($data));
 
         /* 积压队列数量 */
-        ssdbService::getInstance()->zincr('delay_queue', $queue_name, 1);
+        $this->ssdb->zincr('delay_queue', $queue_name, 1);
 
         return $id;
     }
@@ -121,14 +132,14 @@ class delayQueue {
         $score_end = time();
         $score_start = $score_end - 365 * 24 * 3600;
         $size = ($size > 1000 && $size <= 0) ? 1000 : $size;
-        $items = ssdbService::getInstance()->zscan($zname, '', $score_start, $score_end, $size);
+        $items = $this->ssdb->zscan($zname, '', $score_start, $score_end, $size);
         if ($items) {
             foreach ($items as $id => $time) {
                 /* 组合数据 */
-                $value = ssdbService::getInstance()->hget($hname, $id);
+                $value = $this->ssdb->hget($hname, $id);
                 /* 删除队列数据 */
-                ssdbService::getInstance()->zdel($zname, $id);
-                ssdbService::getInstance()->hdel($hname, $id);
+                $this->ssdb->zdel($zname, $id);
+                $this->ssdb->hdel($hname, $id);
                 if (empty($value)) {
                     continue;
                 }
@@ -141,7 +152,7 @@ class delayQueue {
 
         /* 修正统计 */
         $total = $this->size($queue_name);
-        ssdbService::getInstance()->zset('delay_queue', $queue_name, $total);
+        $this->ssdb->zset('delay_queue', $queue_name, $total);
 
         /* 解锁 */
         Redis::getInstance()->unlock($lock_key, $lock_value);
@@ -184,14 +195,14 @@ class delayQueue {
         $score_end = time();
         $score_start = $score_end - 365 * 24 * 3600;
         $size = ($size > 1000 && $size <= 0) ? 1000 : $size;
-        $items = ssdbService::getInstance()->zscan($zname, '', $score_start, $score_end, $size);
+        $items = $this->ssdb->zscan($zname, '', $score_start, $score_end, $size);
         if ($items) {
             foreach ($items as $id => $time) {
                 /* 组合数据 */
-                $value = ssdbService::getInstance()->hget($hname, $id);
+                $value = $this->ssdb->hget($hname, $id);
                 /* 删除队列数据 */
-                ssdbService::getInstance()->zdel($zname, $id);
-                ssdbService::getInstance()->hdel($hname, $id);
+                $this->ssdb->zdel($zname, $id);
+                $this->ssdb->hdel($hname, $id);
                 if (empty($value)) {
                     continue;
                 }
@@ -206,7 +217,7 @@ class delayQueue {
 
         /* 修正统计 */
         $total = $this->size($queue_name);
-        ssdbService::getInstance()->zset('delay_queue', $queue_name, $total);
+        $this->ssdb->zset('delay_queue', $queue_name, $total);
 
         /* 解锁 */
         Redis::getInstance()->unlock($lock_key, $lock_value);
@@ -235,19 +246,19 @@ class delayQueue {
 
         if (is_array($ids)) {
             foreach ($ids as $key => $id) {
-                ssdbService::getInstance()->zdel($zname, $id);
-                ssdbService::getInstance()->hdel($hname, $id);
+                $this->ssdb->zdel($zname, $id);
+                $this->ssdb->hdel($hname, $id);
             }
         }
 
         if (is_numeric($ids)) {
-            ssdbService::getInstance()->zdel($zname, $id);
-            ssdbService::getInstance()->hdel($hname, $id);
+            $this->ssdb->zdel($zname, $id);
+            $this->ssdb->hdel($hname, $id);
         }
 
         /* 修正统计 */
         $total = $this->size($queue_name);
-        ssdbService::getInstance()->zset('delay_queue', $queue_name, $total);
+        $this->ssdb->zset('delay_queue', $queue_name, $total);
 
         return true;
     }
@@ -261,7 +272,7 @@ class delayQueue {
     public function queue_list($page = 1, $size = 20) {
         $zname = 'delay_queue';
 
-        $total = ssdbService::getInstance()->zsize($zname);
+        $total = $this->ssdb->zsize($zname);
         $total = intval($total);
         $max_page = ceil($total / $size);
 
@@ -288,17 +299,17 @@ class delayQueue {
                 $newstart = 0;
             }
             if ($order == 0) {
-                $items = ssdbService::getInstance()->zrange($zname, $newstart, $size);
+                $items = $this->ssdb->zrange($zname, $newstart, $size);
             } else {
-                $items = ssdbService::getInstance()->zrrange($zname, $newstart, $size);
+                $items = $this->ssdb->zrrange($zname, $newstart, $size);
             }
             $items = array_reverse($items, TRUE);
         } else {
             $order = $sort_order_method == 0 ? 1 : 0;
             if ($order == 0) {
-                $items = ssdbService::getInstance()->zrange($zname, $start, $size);
+                $items = $this->ssdb->zrange($zname, $start, $size);
             } else {
-                $items = ssdbService::getInstance()->zrrange($zname, $start, $size);
+                $items = $this->ssdb->zrrange($zname, $start, $size);
             }
         }
 
@@ -327,7 +338,7 @@ class delayQueue {
         }
 
         $zname = "delay_queue_{$queue_name}";
-        $total = ssdbService::getInstance()->zsize($zname);
+        $total = $this->ssdb->zsize($zname);
         if (empty($total)) {
             return 0;
         }

@@ -3,19 +3,30 @@
 namespace framework\queue;
 
 use framework\core\Exception;
-use framework\nosql\ssdbService;
 
 /**
  * ssdbQueue
  */
 class ssdbQueue {
 
-    public static function getInstance() {
-        static $obj;
-        if (!$obj) {
-            $obj = new self();
+    private $ssdb;
+
+    /**
+     * 　单实例化
+     * @staticvar array $obj
+     * @param type $conf_name
+     * @return \self
+     */
+    public static function getInstance($conf_name = 'ssdb_mq') {
+        static $obj = [];
+        if (!isset($obj[$conf_name])) {
+            $obj[$conf_name] = new self($conf_name);
         }
-        return $obj;
+        return $obj[$conf_name];
+    }
+
+    public function __construct($conf_name = 'ssdb_mq') {
+        $this->ssdb = \framework\nosql\ssdbService::getInstance($conf_name);
     }
 
     /**
@@ -69,7 +80,7 @@ class ssdbQueue {
     public function qpush(string $queue_name = 'queue_task', array $data = []) {
         $queue_name = $this->getQueueKey($queue_name);
 
-        return ssdbService::getInstance()->qpush($queue_name, $this->setValue($data));
+        return $this->ssdb->qpush($queue_name, $this->setValue($data));
     }
 
     /**
@@ -81,17 +92,13 @@ class ssdbQueue {
     public function batch_qpush(string $queue_name = 'queue_task', array $data = []) {
         $queue_name = $this->getQueueKey($queue_name);
 
-//        ssdbService::getInstance()->batch($queue_name);
-
         if (empty($data)) {
             return false;
         }
 
         foreach ($data as $key => $value) {
-            ssdbService::getInstance()->qpush($queue_name, $this->setValue($value));
+            $this->ssdb->qpush($queue_name, $this->setValue($value));
         }
-
-//        ssdbService::getInstance()->exec($queue_name);
 
         return true;
     }
@@ -106,13 +113,13 @@ class ssdbQueue {
         $queue_name = $this->getQueueKey($queue_name);
 
         if ($size == 1) {
-            $vo = ssdbService::getInstance()->qpop_front($queue_name, $size);
+            $vo = $this->ssdb->qpop_front($queue_name, $size);
             if ($vo) {
                 return $this->getValue($vo);
             }
             return false;
         }
-        $list = ssdbService::getInstance()->qpop_front($queue_name, $size);
+        $list = $this->ssdb->qpop_front($queue_name, $size);
         if ($list) {
             $data = [];
             foreach ($list as $key => $value) {
@@ -133,7 +140,7 @@ class ssdbQueue {
     public function qrange($queue_name = 'queue_task', $start = 0, $end = -1) {
         $queue_name = $this->getQueueKey($queue_name);
 
-        $rows = ssdbService::getInstance()->qrange($queue_name, $start, $end);
+        $rows = $this->ssdb->qrange($queue_name, $start, $end);
         if (empty($rows)) {
             return false;
         }
@@ -159,7 +166,7 @@ class ssdbQueue {
     public function size($queue_name = 'queue_task') {
         $queue_name = $this->getQueueKey($queue_name);
 
-        $rs = ssdbService::getInstance()->qsize($queue_name);
+        $rs = $this->ssdb->qsize($queue_name);
         if ($rs) {
             return $rs;
         }
