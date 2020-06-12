@@ -103,16 +103,17 @@ class Handle {
             'code' => $this->getCode($exception),
         ];
 
+
+
         if (Request::getInstance()->isAjax() == true) {
+            $json = json_encode(['ret' => $data['code'], 'data' => null, 'msg' => $data['message']]);
 
             switch ($data['code']) {
                 case 0:
-                    $data['code'] = 500;
+                    return Response::getInstance()->clear()->status(200)->contentType("application/json")->write($json)->send();
                 default:
+                    return Response::getInstance()->clear()->status($data['code'])->contentType("application/json")->write($json)->send();
             }
-
-            $json = json_encode(['ret' => $data['code'], 'data' => null, 'msg' => $data['message']]);
-            return Response::getInstance()->clear()->status(200)->contentType("application/json")->write($json)->send();
         }
 
         /* 保留一层 */
