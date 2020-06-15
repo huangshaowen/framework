@@ -2,8 +2,6 @@
 
 namespace framework\session;
 
-use framework\nosql\Redis;
-
 /**
  * session redis 驱动类
  */
@@ -23,14 +21,14 @@ class redisDriver extends \SessionHandler {
         if (empty($session_id)) {
             return '';
         }
-        return (string) Redis::getInstance()->simple_get($session_id);
+        return (string) \framework\nosql\Redis::getInstance('redis_session')->simple_get($session_id);
     }
 
     public function write($session_id, $session_data) {
         if (empty($session_id)) {
             return false;
         }
-        Redis::getInstance()->simple_set($session_id, $session_data, $this->ttl);
+        \framework\nosql\Redis::getInstance('redis_session')->simple_set($session_id, $session_data, $this->ttl);
         return true;
     }
 
@@ -38,7 +36,7 @@ class redisDriver extends \SessionHandler {
         if (empty($session_id)) {
             return false;
         }
-        Redis::getInstance()->simple_delete($session_id);
+        \framework\nosql\Redis::getInstance('redis_session')->simple_delete($session_id);
         return true;
     }
 

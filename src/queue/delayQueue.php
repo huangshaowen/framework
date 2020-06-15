@@ -3,7 +3,6 @@
 namespace framework\queue;
 
 use framework\core\Exception;
-use framework\nosql\Redis;
 
 /**
  * 延时队列
@@ -121,7 +120,7 @@ class delayQueue {
 
         /* 加锁 */
         $lock_key = "qpop_{$zname}";
-        $lock_value = Redis::getInstance()->lock($lock_key, 10);
+        $lock_value = \framework\nosql\Redis::getInstance()->lock($lock_key, 10);
         if ($lock_value == false) {
             /* 加锁失败 */
             return false;
@@ -155,7 +154,7 @@ class delayQueue {
         $this->ssdb->zset('delay_queue', $queue_name, $total);
 
         /* 解锁 */
-        Redis::getInstance()->unlock($lock_key, $lock_value);
+        \framework\nosql\Redis::getInstance()->unlock($lock_key, $lock_value);
 
         /* 返回 */
         if (empty($return_data)) {
@@ -185,7 +184,7 @@ class delayQueue {
 
         /* 加锁 */
         $lock_key = "move_to_queue_{$zname}";
-        $lock_value = Redis::getInstance()->lock($lock_key, 5);
+        $lock_value = \framework\nosql\Redis::getInstance()->lock($lock_key, 5);
         if ($lock_value == false) {
             /* 加锁失败 */
             return false;
@@ -211,7 +210,8 @@ class delayQueue {
                 if (empty($data)) {
                     continue;
                 }
-                RedisQueue::getInstance()->qpush($queue_name, $data);
+                /* 加入 redis 队列 */
+                \framework\queue\RedisQueue::getInstance('redis_mq')->qpush($queue_name, $data);
             }
         }
 
@@ -220,7 +220,7 @@ class delayQueue {
         $this->ssdb->zset('delay_queue', $queue_name, $total);
 
         /* 解锁 */
-        Redis::getInstance()->unlock($lock_key, $lock_value);
+        \framework\nosql\Redis::getInstance()->unlock($lock_key, $lock_value);
 
         /* 返回 */
         return true;

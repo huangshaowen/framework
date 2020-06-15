@@ -2,19 +2,29 @@
 
 namespace framework\queue;
 
-use framework\nosql\Redis;
-
 /**
  * RedisQueue
  */
 class RedisQueue {
 
-    public static function getInstance() {
-        static $obj;
-        if (!$obj) {
-            $obj = new self();
+    private $redis;
+
+    public function __construct($conf_name = 'redis_mq') {
+        $this->redis = \framework\nosql\Redis::getInstance($conf_name);
+    }
+
+    /**
+     * 　单实例化
+     * @staticvar array $obj
+     * @param type $conf_name
+     * @return \self
+     */
+    public static function getInstance($conf_name = 'redis_mq') {
+        static $obj = [];
+        if (!isset($obj[$conf_name])) {
+            $obj[$conf_name] = new self($conf_name);
         }
-        return $obj;
+        return $obj[$conf_name];
     }
 
     protected function getQueueKey($queue_name) {
@@ -34,7 +44,7 @@ class RedisQueue {
         $queue_name = $this->getQueueKey($queue_name);
 
         if ($size == 1) {
-            $vo = Redis::getInstance()->lPop($queue_name);
+            $vo = $this->redis->lPop($queue_name);
             if ($vo) {
                 return $vo;
             }
@@ -43,7 +53,7 @@ class RedisQueue {
 
         $data = [];
         for ($i = 0; $i < $size; $i++) {
-            $vo = Redis::getInstance()->lPop($queue_name);
+            $vo = $this->redis->lPop($queue_name);
             if ($vo) {
                 $data[] = $vo;
             }
@@ -60,7 +70,7 @@ class RedisQueue {
     public function qpush($queue_name = 'queue_task', $data = []) {
         $queue_name = $this->getQueueKey($queue_name);
 
-        return Redis::getInstance()->rPush($queue_name, $data);
+        return $this->redis->rPush($queue_name, $data);
     }
 
     /**
@@ -73,7 +83,7 @@ class RedisQueue {
     public function qrange($queue_name = 'queue_task', $start = 0, $end = -1) {
         $queue_name = $this->getQueueKey($queue_name);
 
-        return Redis::getInstance()->lRange($queue_name, $start, $end);
+        return $this->redis->lRange($queue_name, $start, $end);
     }
 
     /**
@@ -84,7 +94,7 @@ class RedisQueue {
     public function size($queue_name) {
         $queue_name = $this->getQueueKey($queue_name);
 
-        return Redis::getInstance()->lLen($queue_name);
+        return $this->redis->lLen($queue_name);
     }
 
 }
