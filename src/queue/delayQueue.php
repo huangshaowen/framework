@@ -211,7 +211,7 @@ class delayQueue {
                     continue;
                 }
                 /* 加入 redis 队列 */
-                \framework\queue\RedisQueue::getInstance('redis_mq')->qpush($queue_name, $data);
+                \framework\queue\ssdbQueue::getInstance()->qpush($queue_name, $data);
             }
         }
 
