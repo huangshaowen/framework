@@ -33,19 +33,12 @@ class Handle {
             'file' => $exception->getFile(),
             'line' => $exception->getLine(),
             'message' => $this->getMessage($exception),
+            'trace' => $exception->getTraceAsString(),
             'code' => $this->getCode($exception),
+//            'source' => $this->getSourceCode($exception),
         ];
-        $log = "[{$data['code']}]{$data['message']}[{$data['file']}:{$data['line']}]";
-
-        $log .= PHP_EOL . $exception->getTraceAsString();
-
-        $debug = debug_backtrace();
-        foreach ($debug as $key => $val) {
-            if (isset($val["file"])) {
-                $log .= PHP_EOL . $val["file"] . "  line  " . $val["line"];
-            }
-        }
-
+        $log = "[{$data['code']}]{$data['message']}[{$data['file']}:{$data['line']}]\r\n{$data['trace']}";
+        
         \framework\core\Log::getInstance()->error($log);
     }
 
@@ -78,13 +71,10 @@ class Handle {
             'file' => $exception->getFile(),
             'line' => $exception->getLine(),
             'message' => $this->getMessage($exception),
+            'trace' => $exception->getTraceAsString(),
             'code' => $this->getCode($exception),
         ];
-        $log = "[{$data['code']}]{$data['message']}[{$data['file']}:{$data['line']}]";
-
-        $log .= PHP_EOL . $exception->getTraceAsString();
-
-        echo $log . PHP_EOL;
+        echo "[{$data['code']}]{$data['message']}[{$data['file']}:{$data['line']}] \r\n {$data['trace']} \r\n";
     }
 
     /**
@@ -102,8 +92,6 @@ class Handle {
             'message' => $this->getMessage($exception),
             'code' => $this->getCode($exception),
         ];
-
-
 
         if (Request::getInstance()->isAjax() == true) {
             $json = json_encode(['ret' => $data['code'], 'data' => null, 'msg' => $data['message']]);
@@ -181,7 +169,7 @@ class Handle {
      * @return array                 错误文件内容
      */
     protected function getSourceCode(Throwable $exception) {
-// 读取前9行和后9行
+        /* 读取前9行和后9行 */
         $line = $exception->getLine();
         $first = ($line - 9 > 0) ? $line - 9 : 1;
 

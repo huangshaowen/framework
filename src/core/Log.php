@@ -16,10 +16,23 @@ class Log extends AbstractLogger {
     private $_levels = [];
     private $_handler;
 
-    public function __construct(Handler $handler = null) {
+    public function __construct() {
         $refl = new \ReflectionClass('Psr\Log\LogLevel');
         $this->_levels = array_values($refl->getConstants());
-        $this->_handler = $handler ? $handler : new FileHandler();
+
+        $log_conf = Config::getInstance()->get('log_config');
+        if (empty($log_conf)) {
+            $this->_handler = new FileHandler();
+        } else {
+            /* 加载设置项 */
+            $class_name = "\\framework\\core\\log\\handler\\" . $log_conf['handler'] . "Handler";
+
+            if (class_exists($class_name)) {
+                $this->_handler = new $class_name();
+            } else {
+                $this->_handler = new FileHandler();
+            }
+        }
     }
 
     private function _validLevel($level = 0) {
@@ -158,14 +171,14 @@ class Log extends AbstractLogger {
         $now = date('Y-m-d H:i:s');
 
         if (php_sapi_name() == "cli") {
-            $messageWrapped = "{$now}  {$message}\r\n---------------------------------------------------------------cli\r\n";
+            $messageWrapped = "{$now} {$message}";
         } else {
             $uri = Request::getInstance()->get_full_url();
             $source_url = Request::getInstance()->get_url_source();
             $ip = Request::getInstance()->ip(0, true);
             $ua = Request::getInstance()->get_user_agent();
             $method = Request::getInstance()->method();
-            $messageWrapped = "[{$now}] {$ip} {$method} {$uri}\r\n{$source_url}\r\n{$ua}\r\n{$message}\r\n---------------------------------------------------------------\r\n";
+            $messageWrapped = "[{$now}] {$ip} {$method} {$uri}\r\n{$source_url}\r\n{$ua}\r\n{$message}";
         }
 
         foreach ($context as $key => $val) {

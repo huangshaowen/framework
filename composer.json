@@ -13,7 +13,8 @@
         "php": ">=5.6",
         "guzzlehttp/guzzle": "^6.3",
         "symfony/var-dumper": "^3.4",
-        "phpaes/phpaes": "^3.1"
+        "phpaes/phpaes": "^3.1",
+        "psr/log": "~1.0"
     },
     "autoload": {
         "psr-4": {
