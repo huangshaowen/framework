@@ -100,7 +100,6 @@ class ssdbService {
      * @param Exception $ex
      */
     public function exception($ex) {
-        Log::getInstance()->emerg($ex);
         throw new Exception($ex);
     }
 
