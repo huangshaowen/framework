@@ -149,13 +149,19 @@ class Log extends AbstractLogger {
      * @param type $message
      */
     public function sql($message, array $context = array()) {
-        $this->record(LogLevel::ALERT, $message, $context);
+        $this->log(LogLevel::ALERT, $message, $context);
     }
 
     public function log($level, $message, array $context = []) {
         $this->_validLevel($level);
         $context['level'] = $level;
         $this->_messages[$level][] = $this->format($message, $context);
+
+        if (php_sapi_name() == "cli") {
+            /* 因为命令行不退出，所以直接输出 */
+            $this->flush();
+        }
+
         return $this;
     }
 
