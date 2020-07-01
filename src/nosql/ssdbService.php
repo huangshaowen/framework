@@ -4,7 +4,6 @@ namespace framework\nosql;
 
 use framework\core\Exception;
 use framework\core\Config;
-use framework\core\Log;
 
 /**
  * SSDB 分布式中间层
@@ -51,7 +50,7 @@ class ssdbService {
         foreach ($this->conf as $k => $conf) {
 
             try {
-                $con = new SimpleSSDB($conf['host'], $conf['port'], 5000);
+                $con = new SimpleSSDB($conf['host'], $conf['port'], 2000);
                 $this->isConnected = true;
             } catch (Exception $e) {
                 $this->exception($ex);
