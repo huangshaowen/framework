@@ -12,7 +12,7 @@ use framework\core\Exception;
  *
  * SSDB PHP client SDK.
  */
-class SSDBException extends Exception {
+class SSDBException extends \Exception {
     
 }
 
@@ -68,7 +68,6 @@ class SSDB_Response {
 
 }
 
-// Depricated, use SimpleSSDB instead!
 class SSDB {
 
     private $debug = false;
@@ -80,7 +79,7 @@ class SSDB {
 
     function __construct($host, $port, $timeout_ms = 2000) {
         $timeout_f = (float) $timeout_ms / 1000;
-        $this->sock = @stream_socket_client("[$host]:$port", $errno, $errstr, $timeout_f);
+        $this->sock = @stream_socket_client("$host:$port", $errno, $errstr, $timeout_f);
         if (!$this->sock) {
             throw new SSDBException("$errno: $errstr");
         }
@@ -522,7 +521,7 @@ class SSDB {
                 $ret = @fwrite($this->sock, $s);
                 if ($ret === false || $ret === 0) {
                     $this->close();
-                    throw new SSDBException('Connection lost');
+                    throw new SSDBException('SSDB Connection lost');
                 }
                 $s = substr($s, $ret);
                 if (strlen($s) == 0) {

@@ -50,14 +50,13 @@ class ssdbService {
         foreach ($this->conf as $k => $conf) {
 
             try {
-                $con = new SimpleSSDB($conf['host'], $conf['port'], 2000);
+                $con = new SimpleSSDB($conf['host'], $conf['port']);
                 $this->isConnected = true;
             } catch (Exception $e) {
-                $this->exception($ex);
                 $this->isConnected = false;
                 continue;
             }
-
+            
             if (!($con == false)) {
                 /* ssdb 需要验证 */
                 if (!empty($conf['password'])) {

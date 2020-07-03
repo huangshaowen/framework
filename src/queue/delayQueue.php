@@ -71,7 +71,7 @@ class delayQueue {
      * @param   int         $ttl            延时时间(300秒)
      * @return  int         $id             队列编号
      */
-    public function qpush($queue_name = 'queue_task', $data = [], $ttl = 300) {
+    public function qpush(string $queue_name = 'queue_task', array $data = [], int $ttl = 300) {
         if (empty($queue_name)) {
             throw new \LengthException('队列名称不能为空', 410);
         }
@@ -105,7 +105,7 @@ class delayQueue {
      * @param   int         $size           数量
      * @return boolean/array
      */
-    public function qpop($queue_name = 'queue_task', $size = 1) {
+    public function qpop(string $queue_name = 'queue_task', int $size = 1) {
         if (empty($queue_name)) {
             throw new \LengthException('队列名称不能为空', 410);
         }
@@ -165,11 +165,12 @@ class delayQueue {
 
     /**
      * 弹出队列数据自动转正式队列
-     * @param   string      $queue_name     队列名称
-     * @param   int         $size           数量
-     * @return boolean/array
+     * @param       string          $queue_name        队列名称
+     * @param       int             $size              数量
+     * @return boolean
+     * @throws \LengthException
      */
-    public function move_to_queue($queue_name = 'queue_task', $size = 1) {
+    public function move_to_queue(string $queue_name = 'queue_task', int $size = 1) {
         if (empty($queue_name)) {
             throw new \LengthException('队列名称不能为空', 410);
         }
@@ -231,8 +232,9 @@ class delayQueue {
      * @param string $queue_name
      * @param array $ids
      * @return boolean
+     * @throws \LengthException
      */
-    public function delete($queue_name = 'queue_task', $ids = []) {
+    public function delete(string $queue_name = 'queue_task', array $ids = []) {
         if (empty($queue_name)) {
             throw new \LengthException('队列名称不能为空', 410);
         }
@@ -251,11 +253,6 @@ class delayQueue {
             }
         }
 
-        if (is_numeric($ids)) {
-            $this->ssdb->zdel($zname, $id);
-            $this->ssdb->hdel($hname, $id);
-        }
-
         /* 修正统计 */
         $total = $this->size($queue_name);
         $this->ssdb->zset('delay_queue', $queue_name, $total);
@@ -265,11 +262,11 @@ class delayQueue {
 
     /**
      * 获取所有延时队列名称列表
-     * @param type $page
-     * @param type $size
-     * @return type
+     * @param int $page
+     * @param int $size
+     * @return array
      */
-    public function queue_list($page = 1, $size = 20) {
+    public function queue_list(int $page = 1, int $size = 20) {
         $zname = 'delay_queue';
 
         $total = $this->ssdb->zsize($zname);
@@ -324,15 +321,17 @@ class delayQueue {
             }
             $data['list'] = $list;
         }
+
         return $data;
     }
 
     /**
-     * 查看队列数量
-     * @param type $queue_name
+     * 获取队列数量
+     * @param string $queue_name
      * @return int
+     * @throws \LengthException
      */
-    public function size($queue_name = 'queue_task') {
+    public function size(string $queue_name = 'queue_task') {
         if (empty($queue_name)) {
             throw new \LengthException('队列名称不能为空', 410);
         }
