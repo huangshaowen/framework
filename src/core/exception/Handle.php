@@ -55,6 +55,7 @@ class Handle {
                     'method' => Request::getInstance()->method(),
                     'GET Data' => Request::getInstance()->get(),
                     'POST Data' => Request::getInstance()->post(),
+                    'version_code' => Request::getInstance()->header('version-code', '', 'trim'),
                     'token' => Request::getInstance()->header('token', '', 'trim'),
                     'access_token' => Request::getInstance()->header('access-token', '', 'trim'),
                     'language' => Request::getInstance()->header('ACCEPT_LANGUAGE', '', 'trim'),
