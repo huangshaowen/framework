@@ -29,16 +29,43 @@ class Handle {
         }
 
         /* 收集异常数据 */
-        $data = [
-            'file' => $exception->getFile(),
-            'line' => $exception->getLine(),
-            'message' => $this->getMessage($exception),
-            'trace' => $exception->getTraceAsString(),
-            'code' => $this->getCode($exception),
-//            'source' => $this->getSourceCode($exception),
-        ];
-        $log = "[{$data['code']}]{$data['message']}[{$data['file']}:{$data['line']}]\r\n{$data['trace']}";
-        
+        if (PHP_SAPI == 'cli') {
+            $data = [
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+                'message' => $this->getMessage($exception),
+                'code' => $this->getCode($exception),
+                'tables' => [
+                    'trace' => $exception->getTraceAsString(),
+                    'method' => 'CLI',
+//                      'source' => $this->getSourceCode($exception),
+                ]
+            ];
+        } else {
+            $data = [
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+                'message' => $this->getMessage($exception),
+                'code' => $this->getCode($exception),
+                'tables' => [
+                    'url' => Request::getInstance()->get_full_url(),
+                    'ip' => Request::getInstance()->ip(0, true),
+                    'ua' => Request::getInstance()->get_user_agent(),
+                    'source_url' => Request::getInstance()->get_url_source(),
+                    'method' => Request::getInstance()->method(),
+                    'GET Data' => Request::getInstance()->get(),
+                    'POST Data' => Request::getInstance()->post(),
+                    'token' => Request::getInstance()->header('token', '', 'trim'),
+                    'access_token' => Request::getInstance()->header('access-token', '', 'trim'),
+                    'language' => Request::getInstance()->header('ACCEPT_LANGUAGE', '', 'trim'),
+                    'server_ip' => Request::getInstance()->server('SERVER_ADDR', '', 'trim'),
+                ],
+            ];
+        }
+
+        $tables = var_export($data['tables'], true);
+        $log = "[{$data['code']}]{$data['message']}[{$data['file']}:{$data['line']}]\r\n{$tables}";
+
         \framework\core\Log::getInstance()->error($log);
     }
 

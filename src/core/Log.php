@@ -175,17 +175,7 @@ class Log extends AbstractLogger {
         }
 
         $now = date('Y-m-d H:i:s');
-
-        if (php_sapi_name() == "cli") {
-            $messageWrapped = "{$now} {$message}";
-        } else {
-            $uri = Request::getInstance()->get_full_url();
-            $source_url = Request::getInstance()->get_url_source();
-            $ip = Request::getInstance()->ip(0, true);
-            $ua = Request::getInstance()->get_user_agent();
-            $method = Request::getInstance()->method();
-            $messageWrapped = "[{$now}] {$ip} {$method} {$uri}\r\n{$source_url}\r\n{$ua}\r\n{$message}";
-        }
+        $messageWrapped = "{$now} {$message}";
 
         foreach ($context as $key => $val) {
             if (!is_array($val) && (!is_object($val) || method_exists($val, '__toString'))) {
