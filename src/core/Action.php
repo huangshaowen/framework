@@ -23,7 +23,7 @@ abstract class Action {
 
     // 初始化
     function __initialize() {
-        
+
     }
 
     /**
@@ -166,7 +166,7 @@ abstract class Action {
 
         $buffer = View::getInstance()->fetch('error_404.tpl.php', $templates_path);
 
-        Response::getInstance()->write($buffer)->send();
+        Response::getInstance()->status(404)->write($buffer)->send();
     }
 
     /**
