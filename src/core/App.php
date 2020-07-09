@@ -206,6 +206,7 @@ class App {
         $class_name = $this->app_name . "\\action\\" . $this->module_name;
         $action = $this->action_name;
 
+        /* 检查类是否存在 */
         if (!class_exists($class_name)) {
             $class_name = $this->app_name . "\\action\\_empty";
             if (!class_exists($class_name)) {
@@ -214,9 +215,16 @@ class App {
             }
         }
 
-        $module = new $class_name;
-        if (!is_callable([$module, $action])) {
-            if (is_callable([$module, '_empty'])) {
+        /* 检查方法是否存在 */
+        try {
+            $reflect = new \ReflectionClass($class_name);
+        } catch (\ReflectionException $e) {
+            /* 显示 404 页面 */
+            throw new Exception('class not exists:' . $class_name, 404);
+        }
+
+        if ($reflect->hasMethod($action) == false) {
+            if ($reflect->hasMethod('_empty') == true) {
                 $action = '_empty';
             } else {
                 /* 显示 404 页面 */
@@ -224,16 +232,18 @@ class App {
             }
         }
 
+        /* 判断要调用的方法是否可用 */
+        $method = $reflect->getMethod($action);
+        if (($method->isPublic() == false) && ($method->isStatic() == false)) {
+            /* 显示 404 页面 */
+            throw new Exception("class {$class_name} not exists action:" . $action, 404);
+        }
+
+        /* 执行 */
+        $object = $reflect->newInstance();
         try {
-            /* 执行当前操作 */
-            $method = new \ReflectionMethod($module, $action);
-            if ($method->isPublic()) {
-                $class = new \ReflectionClass($module);
-                return $method->invoke($module);
-            } else {
-                /* 操作方法不是Public 抛出异常 */
-                throw new \ReflectionException();
-            }
+            $reflect = new \ReflectionMethod($class_name, $action);
+            return $reflect->invoke($object);
         } catch (\ReflectionException $e) {
             throw new Exception($e->getTraceAsString(), 500);
         }
