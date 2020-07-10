@@ -101,6 +101,10 @@ class Redis {
                 $this->prefix = $conf['prefix'];
             }
         }
+
+        if ($this->isConnected == false) {
+            throw new Exception('redis 连接错误!');
+        }
     }
 
     /**
@@ -664,24 +668,6 @@ class Redis {
      * @return type
      */
     public function simple_delete($cache_id) {
-        $key = $this->getCacheKey($cache_id);
-
-        try {
-            return $this->_getConForKey($key)->del($key);
-        } catch (Exception $ex) {
-            //连接状态置为false
-            $this->isConnected = false;
-            $this->is_available();
-        }
-        return false;
-    }
-
-    /**
-     * 简单删除缓存
-     * @param type $cache_id
-     * @return type
-     */
-    public function del($cache_id) {
         $key = $this->getCacheKey($cache_id);
 
         try {
