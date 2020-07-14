@@ -71,13 +71,13 @@ class nsqQueue {
 
     /**
      * 加入队列
-     * @param type $queue_name
+     * @param string $queue_name
      * @param array $data
      * @param int $ttl
      * @return int
      * @throws \LengthException
      */
-    public function qpush($queue_name = 'queue_task', array $data = [], int $ttl = 0) {
+    public function qpush(string $queue_name = 'queue_task', array $data = [], int $ttl = 0) {
         if (empty($queue_name)) {
             throw new \LengthException('队列名称不能为空', 410);
         }

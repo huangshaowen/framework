@@ -355,11 +355,6 @@ class Response {
         }
 
         echo $this->body;
-
-        if (function_exists('fastcgi_finish_request')) {
-            // 提高页面响应
-            fastcgi_finish_request();
-        }
     }
 
     /**
@@ -390,15 +385,6 @@ class Response {
         $json = json_encode($data);
 
         $this->clear()->contentType("application/javascript")->write($callback . '(' . $json . ');')->send();
-    }
-
-    /**
-     * 缓存一年
-     */
-    public function HttpCache() {
-        header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
-        header('Expires: ' . gmdate('D, d M Y H:i:s', time() + 31536000) . ' GMT');
-        header('Cache-control: max-age=31536000');
     }
 
     /**

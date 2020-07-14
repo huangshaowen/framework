@@ -40,7 +40,7 @@ class RedisQueue {
      * @param   int         $size           数量
      * @return boolean/array
      */
-    public function qpop($queue_name = 'queue_task', $size = 1) {
+    public function qpop(string $queue_name = 'queue_task', int $size = 1) {
         $queue_name = $this->getQueueKey($queue_name);
 
         if ($size == 1) {
@@ -67,7 +67,7 @@ class RedisQueue {
      * @param   array       $data           数据
      * @return boolean
      */
-    public function qpush($queue_name = 'queue_task', $data = []) {
+    public function qpush(string $queue_name = 'queue_task', array $data = []) {
         $queue_name = $this->getQueueKey($queue_name);
 
         return $this->redis->rPush($queue_name, $data);
@@ -75,12 +75,12 @@ class RedisQueue {
 
     /**
      * 查看队列数据
-     * @param type $queue_name
-     * @param type $start
-     * @param type $end
-     * @return type
+     * @param string $queue_name
+     * @param int $start
+     * @param int $end
+     * @return boolean/array
      */
-    public function qrange($queue_name = 'queue_task', $start = 0, $end = -1) {
+    public function qrange(string $queue_name = 'queue_task', int $start = 0, int $end = -1) {
         $queue_name = $this->getQueueKey($queue_name);
 
         return $this->redis->lRange($queue_name, $start, $end);
@@ -88,10 +88,10 @@ class RedisQueue {
 
     /**
      * 查看队列数量
-     * @param type $queue_name
+     * @param string $queue_name
      * @return int
      */
-    public function size($queue_name) {
+    public function size(string $queue_name) {
         $queue_name = $this->getQueueKey($queue_name);
 
         return $this->redis->lLen($queue_name);

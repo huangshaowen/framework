@@ -5,7 +5,7 @@ namespace framework\queue;
 use framework\core\Exception;
 
 /**
- * 延时队列
+ * 分钟级延时队列
  */
 class delayQueue {
 

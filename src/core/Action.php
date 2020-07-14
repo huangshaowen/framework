@@ -166,14 +166,14 @@ abstract class Action {
 
         $buffer = View::getInstance()->fetch('error_404.tpl.php', $templates_path);
 
-        Response::getInstance()->status(404)->write($buffer)->send();
+        Response::getInstance()->clear()->status(404)->write($buffer)->send();
     }
 
     /**
      * 无 http 缓存
      */
     protected function no_cache() {
-        Response::getInstance()->cache(false)->sendHeaders();
+        Response::getInstance()->cache(false);
     }
 
     /**
