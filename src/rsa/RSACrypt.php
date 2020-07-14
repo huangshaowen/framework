@@ -37,73 +37,88 @@ class RSACrypt {
 
     /**
      * 私钥加密
-     * @param $data
-     * @return mixed|string
+     * @param string $data
+     * @return string
+     * @throws Exception
      */
-    public function encode($data) {
+    public function encode(string $data): string {
         $pi_key = openssl_pkey_get_private($this->privkey);
         $encrypted = "";
-        openssl_private_encrypt($data, $encrypted, $pi_key, OPENSSL_PKCS1_PADDING); //私钥加密
+        $rs = openssl_private_encrypt($data, $encrypted, $pi_key, OPENSSL_PKCS1_PADDING); //私钥加密
+        if ($rs == false) {
+            throw new \Exception("RSA私钥加密失败", 500);
+        }
         $encrypted = $this->urlsafe_b64encode($encrypted); //加密后的内容通常含有特殊字符，需要编码转换下，在网络间通过url传输时要注意base64编码是否是url安全的
         return $encrypted;
     }
 
     /**
      * 公钥解密
-     * @param $data
+     * @param string $data
      * @return string
+     * @throws Exception
      */
-    public function decode($data) {
+    public function decode(string $data): string {
         $pu_key = openssl_pkey_get_public($this->pubkey);
         $decrypted = "";
         $data = $this->urlsafe_b64decode($data);
 
-        openssl_public_decrypt($data, $decrypted, $pu_key); //公钥解密
-
+        $rs = openssl_public_decrypt($data, $decrypted, $pu_key); //公钥解密
+        if ($rs == false) {
+            throw new \Exception("RSA公钥解密失败", 500);
+        }
         return $decrypted;
     }
 
     /**
      * 公钥加密
-     * @param $data
-     * @return mixed|string
+     * @param string $data
+     * @return string
+     * @throws \Exception
      */
-    public function encryptByPublicKey($data) {
+    public function encryptByPublicKey(string $data): string {
         $pu_key = openssl_pkey_get_public($this->pubkey);
         $encrypted = "";
-        openssl_public_encrypt($data, $encrypted, $pu_key, OPENSSL_PKCS1_PADDING); //公钥加密
+        $rs = openssl_public_encrypt($data, $encrypted, $pu_key, OPENSSL_PKCS1_PADDING); //公钥加密
+        if ($rs == false) {
+            throw new \Exception("RSA公钥加密失败", 500);
+        }
         $encrypted = $this->urlsafe_b64encode($encrypted); //加密后的内容通常含有特殊字符，需要编码转换下，在网络间通过url传输时要注意base64编码是否是url安全的
         return $encrypted;
     }
 
     /**
      * 私钥解密
-     * @param $data
+     * @param string $data
      * @return string
+     * @throws \Exception
      */
-    public function decryptByPrivateKey($data) {
+    public function decryptByPrivateKey(string $data): string {
         $pi_key = openssl_pkey_get_private($this->privkey);
         $decrypted = "";
         $data = $this->urlsafe_b64decode($data);
-        openssl_private_decrypt($data, $decrypted, $pi_key); //私钥解密
+        $rs = openssl_private_decrypt($data, $decrypted, $pi_key); //私钥解密
+        if ($rs == false) {
+            throw new \Exception("RSA私钥解密失败", 500);
+        }
         return $decrypted;
     }
 
     /**
      * 安全的b64encode
-     * @param $string
-     * @return mixed|string
+     * @param string $string
+     * @return string
      */
-    private function urlsafe_b64encode($string) {
+    private function urlsafe_b64encode(string $string): string {
         return str_replace('=', '', strtr(base64_encode($string), '+/', '-_'));
     }
 
     /**
      * 安全的b64decode
-     * @param $string
+     * @param string $string
      * @return string
      */
-    private function urlsafe_b64decode($string) {
+    private function urlsafe_b64decode(string $string): string {
         $remainder = strlen($string) % 4;
         if ($remainder) {
             $padlen = 4 - $remainder;

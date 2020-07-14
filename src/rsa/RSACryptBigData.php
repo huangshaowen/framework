@@ -2,28 +2,10 @@
 
 namespace framework\rsa;
 
-use framework\core\Config;
-
 /**
  * RSA大长度数据加解密类，把内容分段加解密，解决RSA加解密长度限制
  */
 class RSACryptBigData {
-
-    public $pubkey; //公钥
-    public $privkey; //私钥
-
-    function __construct() {
-        /* 解密公钥 */
-        $rsa_public_key_file = Config::getInstance()->get('rsa_public_key');
-        if (is_file($rsa_public_key_file) && file_exists($rsa_public_key_file)) {
-            $this->pubkey = file_get_contents($rsa_public_key_file);
-        }
-        /* 加密私钥 */
-        $rsa_private_key_file = Config::getInstance()->get('rsa_private_key');
-        if (is_file($rsa_private_key_file) && file_exists($rsa_private_key_file)) {
-            $this->privkey = file_get_contents($rsa_private_key_file);
-        }
-    }
 
     public static function getInstance() {
         static $obj;
@@ -35,11 +17,11 @@ class RSACryptBigData {
 
     /**
      * 公钥加密
-     * @param $data
-     * @param string $publickey
+     * @param string $data
      * @return string
+     * @throws \Exception
      */
-    public function encryptByPublicKey_data($data, $publickey = '') {
+    public function encryptByPublicKey_data(string $data, string $publickey = ''): string {
         if ($publickey != "") {
             RSACrypt::getInstance()->pubkey = $publickey;
         }
@@ -52,12 +34,12 @@ class RSACryptBigData {
 
     /**
      * 私钥解密
-     * @param $data
-     * @param string $privatekey
+     * @param string $data
      * @return string
+     * @throws \Exception
      */
-    public function decryptByPrivateKey_data($data, $privatekey = '') {
-        if ($privatekey != "") {  // if null use default
+    public function decryptByPrivateKey_data(string $data, string $privatekey = ''): string {
+        if ($privatekey != "") {
             RSACrypt::getInstance()->privkey = $privatekey;
         }
         $decrypt_res = "";
@@ -70,11 +52,11 @@ class RSACryptBigData {
 
     /**
      * 私钥加密
-     * @param $data
-     * @param string $privatekey
+     * @param string $data
      * @return string
+     * @throws Exception
      */
-    public function encode($data, $privatekey = '') {
+    public function encode(string $data, string $privatekey = ''): string {
         if ($privatekey != "") {
             RSACrypt::getInstance()->privkey = $privatekey;
         }
@@ -87,11 +69,11 @@ class RSACryptBigData {
 
     /**
      * 公钥解密
-     * @param $data
-     * @param string $publickey
+     * @param string $data
      * @return string
+     * @throws Exception
      */
-    public function decode($data, $publickey = '') {
+    public function decode(string $data, string $publickey = ''): string {
         if ($publickey != "") {
             RSACrypt::getInstance()->pubkey = $publickey;
         }

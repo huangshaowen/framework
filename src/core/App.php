@@ -289,7 +289,6 @@ class App {
         if (is_object($data) || is_array($data)) {
             $json = json_encode($data);
             if ($json == false) {
-                Log::getInstance()->emergency($data);
                 if (false === $data) {
                     throw new \InvalidArgumentException(json_last_error_msg());
                 }

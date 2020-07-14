@@ -74,7 +74,6 @@ abstract class DbDriver {
      * @param array $config 数据库配置数组
      * @param string $db
      */
-
     public function __construct($db = '') {
         $this->db_config = Config::getInstance()->get('database.' . $db);
     }
@@ -486,7 +485,7 @@ abstract class DbDriver {
     /**
      * table分析
      * @access protected
-     * @param mixed $table
+     * @param mixed $tables
      * @return string
      */
     protected function parseTable($tables) {
@@ -665,8 +664,9 @@ abstract class DbDriver {
                     $op = ' AND ';
                 }
                 $array = array();
-                foreach ($where as $field => $data)
+                foreach ($where as $field => $data) {
                     $array[] = $this->parseKey($field) . ' = ' . $this->parseValue($data);
+                }
                 $whereStr = implode($op, $array);
                 break;
         }
@@ -676,7 +676,7 @@ abstract class DbDriver {
     /**
      * limit分析
      * @access protected
-     * @param mixed $lmit
+     * @param mixed $limit
      * @return string
      */
     protected function parseLimit($limit) {
@@ -787,8 +787,9 @@ abstract class DbDriver {
      * @return string
      */
     protected function parseUnion($union) {
-        if (empty($union))
+        if (empty($union)) {
             return '';
+        }
         if (isset($union['_all'])) {
             $str = 'UNION ALL ';
             unset($union['_all']);
@@ -922,7 +923,7 @@ abstract class DbDriver {
      * @access public
      * @param string $fields 要插入的数据表字段名
      * @param string $table 要插入的数据表名
-     * @param array $option  查询数据参数
+     * @param array $options  查询数据参数
      * @return false | integer
      */
     public function selectInsert($fields, $table, $options = []) {

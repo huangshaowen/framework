@@ -345,8 +345,9 @@ class MYSQLModel {
         if (is_array($options) && (count($options) > 0) && is_array($pk)) {
             $count = 0;
             foreach (array_keys($options) as $key) {
-                if (is_int($key))
+                if (is_int($key)) {
                     $count++;
+                }
             }
             if ($count == count($pk)) {
                 $i = 0;
@@ -393,8 +394,9 @@ class MYSQLModel {
             // 根据复合主键查询
             $count = 0;
             foreach (array_keys($options) as $key) {
-                if (is_int($key))
+                if (is_int($key)) {
                     $count++;
+                }
             }
             if ($count == count($pk)) {
                 $i = 0;
@@ -694,10 +696,9 @@ class MYSQLModel {
 
     /**
      * 获取一条记录的某个字段值
-     * @access public
-     * @param string $field  字段名
-     * @param string $spea  字段数据间隔符号 NULL返回数组
-     * @return mixed
+     * @param       string      $field          字段名
+     * @param       string      $sepa           字段数据间隔符号 NULL返回数组
+     * @return      mix
      */
     public function getField($field, $sepa = null) {
         $options['field'] = $field;
@@ -973,8 +974,9 @@ class MYSQLModel {
      * @return Model
      */
     public function union($union, $all = false) {
-        if (empty($union))
+        if (empty($union)){
             return $this;
+        }
         if ($all) {
             $this->options['union']['_all'] = true;
         }
