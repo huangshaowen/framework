@@ -6,8 +6,17 @@ use framework\core\Config;
 
 /**
  *  RSA加解密类
- * “参数签名”用私钥加密，“验证签名”用公钥解密
- * “内容加密”用公钥加密，“内容解密”用私钥解密
+ *
+  1.生成私钥
+  -- 生成 RSA 私钥（传统格式的）
+  openssl genrsa -out rsa_private_key.pem 1024
+  -- 将传统格式的私钥转换成 PKCS#8 格式的（JAVA需要使用的私钥需要经过PKCS#8编码，PHP程序不需要，可以直接略过）
+  openssl pkcs8 -topk8 -inform PEM -in rsa_private_key.pem -outform PEM -nocrypt
+  2.生成公钥
+  -- 生成 RSA 公钥(php和java都用转换前私钥生成公钥)
+  openssl rsa -in rsa_private_key.pem -pubout -out rsa_public_key.pem
+ *
+ *
  */
 class RSACrypt {
 
@@ -36,7 +45,7 @@ class RSACrypt {
     }
 
     /**
-     * 私钥加密
+     * 参数签名  私钥加密
      * @param string $data
      * @return string
      * @throws Exception
@@ -48,12 +57,12 @@ class RSACrypt {
         if ($rs == false) {
             throw new \Exception("RSA私钥加密失败", 500);
         }
-        $encrypted = $this->urlsafe_b64encode($encrypted); //加密后的内容通常含有特殊字符，需要编码转换下，在网络间通过url传输时要注意base64编码是否是url安全的
+        $encrypted = $this->urlsafe_b64encode($encrypted);
         return $encrypted;
     }
 
     /**
-     * 公钥解密
+     * 验证签名 公钥解密
      * @param string $data
      * @return string
      * @throws Exception
@@ -71,7 +80,7 @@ class RSACrypt {
     }
 
     /**
-     * 公钥加密
+     * 内容加密 公钥加密
      * @param string $data
      * @return string
      * @throws \Exception
@@ -83,12 +92,12 @@ class RSACrypt {
         if ($rs == false) {
             throw new \Exception("RSA公钥加密失败", 500);
         }
-        $encrypted = $this->urlsafe_b64encode($encrypted); //加密后的内容通常含有特殊字符，需要编码转换下，在网络间通过url传输时要注意base64编码是否是url安全的
+        $encrypted = $this->urlsafe_b64encode($encrypted);
         return $encrypted;
     }
 
     /**
-     * 私钥解密
+     * 内容解密 私钥解密
      * @param string $data
      * @return string
      * @throws \Exception
