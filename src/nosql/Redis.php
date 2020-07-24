@@ -569,7 +569,7 @@ class Redis {
             $lock_second = 1;
         }
 
-        $start = $this->getMicroTime();
+        $start = $this->get_micro_time();
 
         $lock_value = time();
 
@@ -582,7 +582,7 @@ class Redis {
                 break;
             }
             usleep($sleep);
-        } while (($this->getMicroTime()) < ($start + ($timeout * 1000000)));
+        } while (($this->get_micro_time()) < ($start + ($timeout * 1000000)));
         return $rs ? $lock_value : false;
     }
 
@@ -608,85 +608,103 @@ class Redis {
      *
      * @return bigint
      */
-    private function getMicroTime() {
+    public function get_micro_time(): int {
         return bcmul(microtime(true), 1000000);
     }
 
     /**
      * 简单设置缓存
-     * @param type $cache_id    缓存 key
-     * @param type $var         缓存值
-     * @param type $ttl      有效期(秒)
-     * @return
+     * @param string    $cache_id       缓存key
+     * @param mix       $var            缓存值
+     * @param int       $ttl            有效期(秒)
+     * @return bool
      */
-    public function simple_set($cache_id, $var, $ttl = 0) {
+    public function simple_set(string $cache_id, $var, int $ttl = 0): bool {
         $key = $this->getCacheKey($cache_id);
         $var = $this->setValue($var);
 
-        try {
+        if ($this->is_available()) {
             if ($ttl == 0) {
                 return $this->_getConForKey($key)->set($key, $var);
             } else {
                 // 有时间限制
                 return $this->_getConForKey($key)->setex($key, $ttl, $var);
             }
-        } catch (Exception $ex) {
-            //连接状态置为false
-            $this->isConnected = false;
-            $this->is_available();
         }
         return false;
     }
 
     /**
      * 简单获取缓存
-     * @param type $cache_id    缓存名称
-     * @param type $default     默认返回　false
-     * @return boolean
+     * @param string    $cache_id           缓存名称
+     * @param bool      $default            默认返回　false
+     * @return boolean|int|array
      */
-    public function simple_get($cache_id, $default = false) {
+    public function simple_get(string $cache_id, $default = false) {
         $key = $this->getCacheKey($cache_id);
-        try {
+        if ($this->is_available()) {
             $value = $this->_getConForKey($key)->get($key);
-
             if (is_null($value) || false === $value) {
                 return $default;
             }
-
             return $this->getValue($value, $default);
-        } catch (Exception $ex) {
-            //连接状态置为false
-            $this->isConnected = false;
-            $this->is_available();
         }
         return false;
     }
 
     /**
-     * 简单删除缓存
+     * 简单删除缓存(同步)
      * @param type $cache_id
-     * @return type
+     * @return boolean/int
      */
-    public function simple_delete($cache_id) {
+    public function simple_delete(string $cache_id) {
         $key = $this->getCacheKey($cache_id);
-
-        try {
+        if ($this->is_available()) {
             return $this->_getConForKey($key)->del($key);
-        } catch (Exception $ex) {
-            //连接状态置为false
-            $this->isConnected = false;
-            $this->is_available();
         }
         return false;
     }
 
     /**
-     * 设置 key(只针对 KV 类型) 的存活时间.
-     * @param type $cache_id
-     * @param type $ttl
-     * @return type
+     * 自增缓存（针对数值缓存）
+     * @param  string    $key 缓存变量名
+     * @param  int       $step 步长
+     * @return false|int
      */
-    public function expire($cache_id, $ttl) {
+    public function simple_inc(string $key, int $step = 1) {
+        return $this->_getConForKey($key)->incrby($key, $step);
+    }
+
+    /**
+     * 自减缓存（针对数值缓存）
+     * @param  string    $key 缓存变量名
+     * @param  int       $step 步长
+     * @return false|int
+     */
+    public function simple_dec(string $key, int $step = 1) {
+        return $this->_getConForKey($key)->decrby($key, $step);
+    }
+
+    /**
+     * 简单删除缓存（异步）
+     * @param string $cache_id
+     * @return boolean/int
+     */
+    public function simple_unlink(string $cache_id) {
+        $key = $this->getCacheKey($cache_id);
+        if ($this->is_available()) {
+            return $this->_getConForKey($key)->unlink($key);
+        }
+        return false;
+    }
+
+    /**
+     * 设置 key(只针对 KV 类型) 的存活时间
+     * @param string $cache_id
+     * @param int $ttl
+     * @return bool
+     */
+    public function expire(string $cache_id, int $ttl): bool {
         $key = $this->getCacheKey($cache_id);
 
         if ($this->is_available()) {
@@ -696,26 +714,26 @@ class Redis {
     }
 
     /**
-     * 返回 key(只针对 KV 类型) 的存活时间.
-     * @param type $cache_id
-     * @return type
+     * 返回 key(只针对 KV 类型) 的存活时间
+     * @param string $cache_id
+     * @return int
      */
-    public function ttl($cache_id) {
+    public function ttl(string $cache_id): int {
         $key = $this->getCacheKey($cache_id);
 
         if ($this->is_available()) {
             return $this->_getConForKey($key)->ttl($key);
         }
-        return false;
+        return 0;
     }
 
     /**
      * 获取毫秒时间戳
      * @return int
      */
-    function get_js_timestamp() {
+    function get_js_timestamp(): int {
         list($t1, $t2) = explode(' ', microtime());
-        return intval((floatval($t1) + floatval($t2)) * 1000);
+        return (floatval($t1) + floatval($t2)) * 1000;
     }
 
     /**
@@ -768,28 +786,6 @@ class Redis {
             return false;
         }
         return true;
-    }
-
-    /**
-     * 自增缓存（针对数值缓存）
-     * @access public
-     * @param  string    $key 缓存变量名
-     * @param  int       $step 步长
-     * @return false|int
-     */
-    public function simple_inc($key, $step = 1) {
-        return $this->_getConForKey($key)->incrby($key, $step);
-    }
-
-    /**
-     * 自减缓存（针对数值缓存）
-     * @access public
-     * @param  string    $key 缓存变量名
-     * @param  int       $step 步长
-     * @return false|int
-     */
-    public function simple_dec($key, $step = 1) {
-        return $this->_getConForKey($key)->decrby($key, $step);
     }
 
     /**
