@@ -56,7 +56,7 @@ class ssdbService {
                 $this->isConnected = false;
                 continue;
             }
-            
+
             if (!($con == false)) {
                 /* ssdb 需要验证 */
                 if (!empty($conf['password'])) {
@@ -197,6 +197,41 @@ class ssdbService {
     }
 
     /**
+     * 设置value,用于序列化存储
+     * @param mixed $value
+     * @return mixed
+     */
+    public function setValue($value) {
+        if (!is_numeric($value)) {
+            try {
+                $value = json_encode($value);
+            } catch (Exception $exc) {
+                return false;
+            }
+        }
+        return $value;
+    }
+
+    /**
+     * 获取value,解析可能序列化的值
+     * @param mixed $value
+     * @return mixed
+     */
+    public function getValue($value, $default = false) {
+        if (is_null($value) || $value === false) {
+            return false;
+        }
+        if (!is_numeric($value)) {
+            try {
+                $value = json_decode($value, true);
+            } catch (Exception $exc) {
+                return $default;
+            }
+        }
+        return $value;
+    }
+
+    /**
      * 设置指定 key 的值内容.
      * 参数
      *      key
@@ -205,12 +240,12 @@ class ssdbService {
      *      出错则返回 false, 其它值表示正常.
      */
     public function set($k, $v) {
-        if ($this->is_available()) {
-            /* 编码 */
-            $v = json_encode($v);
+        $var = $this->setValue($v);
 
-            return $this->_getConForKey($k)->set($k, $v);
+        if ($this->is_available()) {
+            return $this->_getConForKey($k)->set($k, $var);
         }
+
         return false;
     }
 
@@ -222,16 +257,16 @@ class ssdbService {
      * @return 出错则返回 false, 其它值表示正常.
      */
     public function setx($k, $v, $ttl) {
-        if ($this->is_available()) {
-            /* 编码 */
-            $v = json_encode($v);
+        $var = $this->setValue($v);
 
+        if ($this->is_available()) {
             if (empty($ttl)) {
-                return $this->_getConForKey($k)->set($k, $v);
+                return $this->_getConForKey($k)->set($k, $var);
             } else {
-                return $this->_getConForKey($k)->setx($k, $v, $ttl);
+                return $this->_getConForKey($k)->setx($k, $var, $ttl);
             }
         }
+
         return false;
     }
 
@@ -242,11 +277,11 @@ class ssdbService {
      * @return  出错则返回 false, 1: value 已经设置, 0: key 已经存在, 不更新.
      */
     public function setnx($k, $v) {
+        
+        $var = $this->setValue($v);
+        
         if ($this->is_available()) {
-            /* 编码 */
-            $v = json_encode($v);
-
-            return $this->_getConForKey($k)->setnx($k, $v);
+            return $this->_getConForKey($k)->setnx($k, $var);
         }
         return false;
     }
@@ -283,14 +318,13 @@ class ssdbService {
      * 返回值
      *      如果 key 不存在则返回 null, 如果出错则返回 false, 否则返回 key 对应的值内容.
      */
-    public function get($k) {
+    public function get($k, $default = false) {
         if ($this->is_available()) {
-            $v = $this->_getConForKey($k)->get($k);
-            if (empty($v)) {
-                return false;
+            $value = $this->_getConForKey($k)->get($k);
+            if (is_null($value) || false === $value) {
+                return $default;
             }
-            /* 自动解码 */
-            return json_decode($v, true);
+            return $this->getValue($value, $default);
         }
         return false;
     }
@@ -304,8 +338,10 @@ class ssdbService {
      *      如果 key 不存在则返回 null, 如果出错则返回 false, 否则返回 key 对应的值内容.
      */
     public function getset($k, $v) {
+        $var = $this->setValue($v);
+        
         if ($this->is_available()) {
-            return $this->_getConForKey($k)->getset($k, $v);
+            return $this->_getConForKey($k)->getset($k, $var);
         }
         return false;
     }
