@@ -1170,7 +1170,7 @@ class Redis {
     public function __destruct() {
         if (!empty($this->link)) {
             foreach ($this->link as $key => $value) {
-                unset($this->link[$key]);
+                $this->link[$key]->close();
             }
         }
         unset($this->link);
