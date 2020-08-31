@@ -119,7 +119,7 @@ class App {
         $data = $this->exec();
         /* 输出 */
         if (is_object($data) || is_array($data)) {
-            $json = json_encode($data);
+            $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS);
             if ($json == false) {
                 if (false === $data) {
                     throw new \InvalidArgumentException(json_last_error_msg());
