@@ -667,21 +667,23 @@ class Redis {
 
     /**
      * 自增缓存（针对数值缓存）
-     * @param  string    $key 缓存变量名
+     * @param  string    $cache_id 缓存变量名
      * @param  int       $step 步长
      * @return false|int
      */
-    public function simple_inc(string $key, int $step = 1) {
+    public function simple_inc(string $cache_id, int $step = 1) {
+        $key = $this->getCacheKey($cache_id);
         return $this->_getConForKey($key)->incrby($key, $step);
     }
 
     /**
      * 自减缓存（针对数值缓存）
-     * @param  string    $key 缓存变量名
+     * @param  string    $cache_id 缓存变量名
      * @param  int       $step 步长
      * @return false|int
      */
-    public function simple_dec(string $key, int $step = 1) {
+    public function simple_dec(string $cache_id, int $step = 1) {
+        $key = $this->getCacheKey($cache_id);
         return $this->_getConForKey($key)->decrby($key, $step);
     }
 
