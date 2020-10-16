@@ -35,10 +35,10 @@ class Redis {
     private $reConnected = 0;
 
     /**
-     * 最大重连次数,默认为3次
+     * 最大重连次数,默认为2次
      * @var int
      */
-    private $maxReConnected = 3;
+    private $maxReConnected = 2;
 
     public function __construct($conf_name = 'redis_cache') {
 
@@ -158,7 +158,7 @@ class Redis {
     public function setValue($value) {
         if (!is_numeric($value)) {
             try {
-                $value = json_encode($value);
+                $value = json_encode($value, JSON_UNESCAPED_UNICODE | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS, 512);
             } catch (Exception $exc) {
                 return false;
             }

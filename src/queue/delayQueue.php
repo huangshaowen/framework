@@ -37,7 +37,7 @@ class delayQueue {
     public function setValue($value) {
         if (!is_numeric($value)) {
             try {
-                $value = json_encode($value);
+                $value = json_encode($value, JSON_UNESCAPED_UNICODE | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS, 512);
             } catch (Exception $exc) {
                 return false;
             }

@@ -29,10 +29,10 @@ class ssdbService {
     private $reConnected = 0;
 
     /**
-     * 最大重连次数,默认为3次
+     * 最大重连次数,默认为2次
      * @var int
      */
-    private $maxReConnected = 3;
+    private $maxReConnected = 2;
 
     public function __construct($conf_name = 'ssdb_cache') {
         $this->conf = Config::getInstance()->get($conf_name);
@@ -204,7 +204,7 @@ class ssdbService {
     public function setValue($value) {
         if (!is_numeric($value)) {
             try {
-                $value = json_encode($value);
+                $value = json_encode($value, JSON_UNESCAPED_UNICODE | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS, 512);
             } catch (Exception $exc) {
                 return false;
             }
@@ -277,9 +277,9 @@ class ssdbService {
      * @return  出错则返回 false, 1: value 已经设置, 0: key 已经存在, 不更新.
      */
     public function setnx($k, $v) {
-        
+
         $var = $this->setValue($v);
-        
+
         if ($this->is_available()) {
             return $this->_getConForKey($k)->setnx($k, $var);
         }
@@ -339,7 +339,7 @@ class ssdbService {
      */
     public function getset($k, $v) {
         $var = $this->setValue($v);
-        
+
         if ($this->is_available()) {
             return $this->_getConForKey($k)->getset($k, $var);
         }
