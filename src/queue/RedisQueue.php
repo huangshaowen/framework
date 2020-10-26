@@ -86,11 +86,11 @@ class RedisQueue {
             return false;
         }
 
-        $this->redis->batch($queue_name);
+//        $this->redis->batch($queue_name);
         foreach ($data as $key => $value) {
             $this->redis->rPush($queue_name, $value);
         }
-        $this->redis->exec($queue_name);
+//        $this->redis->exec($queue_name);
 
         return true;
     }
