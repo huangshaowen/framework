@@ -55,7 +55,7 @@ class rabbitmqQueue {
      * @param mixed $value
      * @return mixed
      */
-    protected function setValue($value) {
+    public function setValue($value) {
         if (!is_numeric($value)) {
             try {
                 $value = json_encode($value, JSON_UNESCAPED_UNICODE | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS, 512);
@@ -71,7 +71,7 @@ class rabbitmqQueue {
      * @param mixed $value
      * @return mixed
      */
-    protected function getValue($value, $default = false) {
+    public function getValue($value, $default = false) {
         if (is_null($value) || $value === false) {
             return false;
         }

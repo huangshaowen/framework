@@ -74,6 +74,28 @@ class RedisQueue {
     }
 
     /**
+     * 批量加入队列
+     * @param string $queue_name
+     * @param array $data
+     * @return boolean
+     */
+    public function batch_qpush(string $queue_name = 'queue_task', array $data = []) {
+        $queue_name = $this->getQueueKey($queue_name);
+
+        if (empty($data)) {
+            return false;
+        }
+
+        $this->redis->batch($queue_name);
+        foreach ($data as $key => $value) {
+            $this->redis->rPush($queue_name, $value);
+        }
+        $this->redis->exec($queue_name);
+
+        return true;
+    }
+
+    /**
      * 查看队列数据
      * @param string $queue_name
      * @param int $start
