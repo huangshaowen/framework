@@ -194,55 +194,8 @@ class rabbitmqQueue {
         }
 
         $this->channel->publish_batch();
-        
+
         return true;
-    }
-
-    /**
-     * 普通队列弹出数据
-     * @param   string      $queue_name     队列名称
-     * @param   int         $size           数量
-     * @return  array
-     */
-    public function qpop(string $queue_name = 'queue_task', int $size = 1) {
-        $exchange_name = $this->getExchangeKey($queue_name);
-
-        $this->channel->exchange_declare($exchange_name, 'direct', false, false, false); // 持久交换机
-        $queue_stats = $this->channel->queue_declare($queue_name, false, true, false, false);   // 持久队列
-        $this->channel->queue_bind($queue_name, $exchange_name); //将队列与某个交换机进行绑定
-
-        /* 拉取的方式进行消费 */
-        $queue_total = $queue_stats[1];
-        if ($queue_total > 0) {
-            if ($size <= 1) {
-                $max_i = 1;
-            } else {
-                if ($queue_total > $size) {
-                    $max_i = $size;
-                } else {
-                    $max_i = $queue_total;
-                }
-            }
-            $data = [];
-            for ($i = 0; $i < $max_i; $i++) {
-                $msg = $this->channel->basic_get($queue_name);
-                if (empty($msg)) {
-                    break;
-                }
-                /* 确认消息已经处理 */
-                $this->channel->basic_ack($msg->delivery_info['delivery_tag']);
-                $data[] = $this->getValue($msg->body, false);
-            }
-            if ($max_i == 1) {
-                return $data[0];
-            }
-            if (empty($data)) {
-                return false;
-            }
-            return $data;
-        }
-
-        return false;
     }
 
     /**
@@ -258,46 +211,6 @@ class rabbitmqQueue {
         $this->channel->queue_bind($queue_name, $exchange_name); //将队列与某个交换机进行绑定
 
         return $queue_stats[1];
-    }
-
-    /**
-     * 普通队列消费
-     * @param   string      $queue_name     队列名称
-     * @param   callable    $callback       回调方法
-     */
-    public function consume(string $queue_name = 'queue_task', callable $callback) {
-        $exchange_name = $this->getExchangeKey($queue_name);
-
-        $this->channel->exchange_declare($exchange_name, 'direct', false, false, false); // 持久交换机
-        $this->channel->queue_declare($queue_name, false, true, false, false);   // 持久队列
-        $this->channel->queue_bind($queue_name, $exchange_name); //将队列与某个交换机进行绑定
-
-        $consumer = function($msg) use ($callback) {
-            try {
-                /* 获取消息内容 */
-                $json = $msg->getBody();
-                $data = $this->getValue($json, false);
-                $status = call_user_func($callback, $data);
-                if ($status) {
-                    // 执行成功
-                    $this->channel->basic_ack($msg->delivery_info['delivery_tag']);
-                } else {
-                    // 执行失败
-                    $this->channel->nack($msg->delivery_info['delivery_tag']);
-                }
-            } catch (\Exception $e) {
-                echo '[quick]异常';
-            }
-        };
-
-        /* 只有consumer已经处理并确认了上一条message时queue才分派新的message给它 */
-        $this->channel->basic_qos(null, 1, null);
-        $this->channel->basic_consume($queue_name, '', false, false, false, false, $consumer);
-
-        while ($this->channel->is_consuming()) {
-            $this->channel->wait();
-            usleep(500);
-        }
     }
 
 }
