@@ -193,6 +193,8 @@ class rabbitmqQueue {
             }
         }
 
+        $this->channel->publish_batch();
+        
         return true;
     }
 
