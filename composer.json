@@ -14,6 +14,7 @@
         "guzzlehttp/guzzle": "^6.3",
         "symfony/var-dumper": "^3.4",
         "phpaes/phpaes": "^3.1",
+        "ramsey/uuid": "^3.8",
         "psr/log": "^1.0",
         "psr/simple-cache": "^1.0"
     },

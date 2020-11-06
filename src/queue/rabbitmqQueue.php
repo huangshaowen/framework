@@ -130,14 +130,15 @@ class rabbitmqQueue {
         $this->channel->queue_bind($queue_name, $exchange_name, $exchange_name);
 
         $body = $this->setValue($data);
+        $message_id = \Ramsey\Uuid\Uuid::uuid4();
 
         if ($ttl > 0) {
-            $msg = new \PhpAmqpLib\Message\AMQPMessage($body, ['expiration' => $ttl * 1000, 'delivery_mode' => $delivery_mode]);
+            $msg = new \PhpAmqpLib\Message\AMQPMessage($body, ['expiration' => $ttl * 1000, 'delivery_mode' => $delivery_mode, 'message_id' => $message_id]);
             $this->channel->basic_publish($msg, $cache_exchange_name, $cache_exchange_name);
             return true;
         }
 
-        $msg = new \PhpAmqpLib\Message\AMQPMessage($body, ['delivery_mode' => $delivery_mode]);
+        $msg = new \PhpAmqpLib\Message\AMQPMessage($body, ['delivery_mode' => $delivery_mode, 'message_id' => $message_id]);
         $this->channel->basic_publish($msg, $exchange_name);
 
         return true;
@@ -158,7 +159,8 @@ class rabbitmqQueue {
         $this->channel->queue_bind($queue_name, $exchange_name); //将队列与某个交换机进行绑定
 
         $body = $this->setValue($data);
-        $msg = new \PhpAmqpLib\Message\AMQPMessage($body, ['delivery_mode' => $delivery_mode]);
+        $message_id = \Ramsey\Uuid\Uuid::uuid4();
+        $msg = new \PhpAmqpLib\Message\AMQPMessage($body, ['delivery_mode' => $delivery_mode, 'message_id' => $message_id]);
 
         $this->channel->basic_publish($msg, $exchange_name);
 
@@ -184,7 +186,8 @@ class rabbitmqQueue {
 
         foreach ($datas as $key => $data) {
             $body = $this->setValue($data);
-            $msg = new \PhpAmqpLib\Message\AMQPMessage($body, ['delivery_mode' => $delivery_mode]);
+            $message_id = \Ramsey\Uuid\Uuid::uuid4();
+            $msg = new \PhpAmqpLib\Message\AMQPMessage($body, ['delivery_mode' => $delivery_mode, 'message_id' => $message_id]);
 
             $this->channel->batch_basic_publish($msg, $exchange_name);
             $i++;
