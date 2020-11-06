@@ -154,9 +154,9 @@ class rabbitmqQueue {
     public function qpush(string $queue_name = 'queue_task', array $data = [], int $delivery_mode = 1) {
         $exchange_name = $this->getExchangeKey($queue_name);
 
-        $this->channel->exchange_declare($exchange_name, 'direct', false, false, false); // 持久交换机
-        $this->channel->queue_declare($queue_name, false, true, false, false);   // 持久队列
-        $this->channel->queue_bind($queue_name, $exchange_name); //将队列与某个交换机进行绑定
+        $this->exchange_declare($queue_name);
+        $this->queue_declare($queue_name);
+        $this->queue_bind($queue_name);
 
         $body = $this->setValue($data);
         $message_id = \Ramsey\Uuid\Uuid::uuid4();
@@ -177,9 +177,9 @@ class rabbitmqQueue {
     public function batch_qpush(string $queue_name = 'queue_task', array $datas = [], int $delivery_mode = 1) {
         $exchange_name = $this->getExchangeKey($queue_name);
 
-        $this->channel->exchange_declare($exchange_name, 'direct', false, false, false); // 持久交换机
-        $this->channel->queue_declare($queue_name, false, true, false, false);   // 持久队列
-        $this->channel->queue_bind($queue_name, $exchange_name); //将队列与某个交换机进行绑定
+        $this->exchange_declare($queue_name);
+        $this->queue_declare($queue_name);
+        $this->queue_bind($queue_name);
 
         $i = 0;
         $batch = 100;
@@ -202,18 +202,101 @@ class rabbitmqQueue {
     }
 
     /**
-     * 普通队列未处理消息数量
-     * @param   string      $queue_name     队列名称
-     * @return int
+     * 消费消息（拉模式）
+     * @param string $queue_name        队列名称
+     * @return boolean/obj
      */
-    public function size(string $queue_name = 'queue_task') {
+    public function receive(string $queue_name = 'queue_task') {
+        $this->exchange_declare($queue_name);
+        $this->queue_declare($queue_name);
+        $this->queue_bind($queue_name);
+
+        $msg = $this->channel->basic_get($queue_name);
+        if (empty($msg)) {
+            return false;
+        }
+
+        return $msg;
+    }
+
+    /**
+     * 声明交换器
+     * @param string $queue_name
+     * @return $this
+     */
+    public function exchange_declare(string $queue_name = '') {
         $exchange_name = $this->getExchangeKey($queue_name);
-
         $this->channel->exchange_declare($exchange_name, 'direct', false, false, false); // 持久交换机
-        $queue_stats = $this->channel->queue_declare($queue_name, false, true, false, false);   // 持久队列
-        $this->channel->queue_bind($queue_name, $exchange_name); //将队列与某个交换机进行绑定
+        return $this;
+    }
 
-        return $queue_stats[1];
+    /**
+     * 声明队列
+     * @param string $queue_name
+     * @return $this
+     */
+    public function queue_declare(string $queue_name = 'queue_task') {
+        $this->channel->queue_declare($queue_name, false, true, false, false);   // 持久队列
+        return $this;
+    }
+
+    /**
+     * 队列与交换器绑定
+     * @param string $queue_name
+     * @return $this
+     */
+    public function queue_bind(string $queue_name = 'queue_task') {
+        $exchange_name = $this->getExchangeKey($queue_name);
+        $this->channel->queue_bind($queue_name, $exchange_name);
+        return $this;
+    }
+
+    /**
+     * 消费确认
+     * @param obj $delivery
+     * @return bool
+     */
+    public function acknowledge($delivery) {
+        return $delivery['channel']->basic_ack($delivery['delivery_tag']);
+    }
+
+    /**
+     * 消息拒绝 - 单条
+     * @param obj $delivery
+     * @return bool
+     */
+    public function reject($delivery): bool {
+        return $delivery['channel']->basic_ack($delivery['delivery_tag']);
+    }
+
+    /**
+     * 消息未确认上限
+     * @param $prefetch_size 未确认消息总体大小（B）0表示没有上限
+     * @param $prefetch_count 信道未确认消息上限
+     * @param $a_global 全局配置（信道上全部消费者都得遵从/信道上新消费者）
+     * @return mixed
+     */
+    public function basic_qos($prefetch_count = 1) {
+        $this->channel->basic_qos(null, $prefetch_count, null);
+        return $this;
+    }
+
+    /**
+     * 消费消息（推模式）
+     * @param   string $queue_name            队列名称
+     * @param   callable $callback            回调函数
+     * @param   int $qos                      消息未确认上限
+     */
+    public function basic_consume(string $queue_name, callable $callback, int $qos = 1) {
+        $this->exchange_declare($queue_name);
+        $this->queue_declare($queue_name);
+        $this->queue_bind($queue_name);
+        $this->basic_qos($qos);
+        $this->channel->basic_consume($queue_name, '', false, false, false, false, $callback);
+    }
+
+    public function wait() {
+        return $this->channel->wait();
     }
 
 }
