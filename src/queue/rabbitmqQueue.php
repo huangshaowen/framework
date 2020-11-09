@@ -204,26 +204,19 @@ class rabbitmqQueue {
     /**
      * 消费消息（拉模式）
      * @param string $queue_name        队列名称
-     * @param int $timeout              超时时间(秒)
      * @return boolean/obj
      */
-    public function receive(string $queue_name = 'queue_task', int $timeout = 0) {
+    public function receive(string $queue_name = 'queue_task') {
         $this->exchange_declare($queue_name);
         $this->queue_declare($queue_name);
         $this->queue_bind($queue_name);
 
-        $end = microtime(true) + ($timeout / 1000);
-
-        while (0 === $timeout || microtime(true) < $end) {
-            $msg = $this->channel->basic_get($queue_name);
-            if (empty($msg)) {
-                usleep(100000); //100ms
-            } else {
-                return $msg;
-            }
+        $msg = $this->channel->basic_get($queue_name);
+        if (empty($msg)) {
+            return false;
         }
 
-        return false;
+        return $msg;
     }
 
     /**
