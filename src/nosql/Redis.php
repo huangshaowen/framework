@@ -741,13 +741,13 @@ class Redis {
     /**
      *  操作次数限制函数,采用滑动窗口: 限制 uid 在 period 秒内能操作 action 最多 max_count 次.
      *  如果超过限制, 返回 false.
-     * @param type $uid
-     * @param type $action
-     * @param type $max_count
-     * @param type $period
+     * @param string $uid
+     * @param string $action
+     * @param int $max_count
+     * @param int $period
      * @return boolean
      */
-    public function act_limit($uid, $action, $max_count, $period) {
+    public function act_limit(string $uid, string $action, int $max_count, int $period) {
         $now = time();
         $expire = intval($now / $period) * $period + $period;
         $ttl = $expire - $now;
@@ -765,19 +765,19 @@ class Redis {
         $pipe->expire($zname, $ttl + 1);  //多加一秒过期时间
         $replies = $pipe->exec();
 
-        return $replies[2] <= $max_count;
+        return $replies[2] <= $max_count ? true : false;
     }
 
     /**
      *  操作次数限制函数,采用计数次: 限制 uid 在 period 秒内能操作 action 最多 max_count 次.
      *  如果超过限制, 返回 false.
-     * @param type $uid
-     * @param type $action
-     * @param type $max_count
-     * @param type $period
+     * @param string $uid
+     * @param string $action
+     * @param int $max_count
+     * @param int $period
      * @return boolean
      */
-    public function act_count_limit($uid, $action, $max_count, $period) {
+    public function act_count_limit(string $uid, string $action, int $max_count, int $period) {
         $now = time();
         $expire = intval($now / $period) * $period + $period;
         $ttl = $expire - $now;
