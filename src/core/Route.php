@@ -16,6 +16,9 @@ class Route {
         if (empty($regx)) {
             return false;
         }
+
+        $regx = strtolower($regx);
+
         /* URL映射定义（静态路由） */
         $maps = Config::getInstance()->get('URL_MAP_RULES');
         if (isset($maps[$regx])) {
@@ -85,7 +88,7 @@ class Route {
                             return false;
                     }
                     $name = substr($val, 1, -2);
-                }elseif ($pos = strpos($val, '^')) {
+                } elseif ($pos = strpos($val, '^')) {
                     $array = explode('-', substr(strstr($val, '^'), 1));
                     if (in_array($m1[$key], $array)) {
                         return false;
