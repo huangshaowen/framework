@@ -635,8 +635,7 @@ class Redis {
     }
 
     /**
-     * 简单设置缓存
-     * 当 key 不存在时, 设置指定 key 的值内容. 如果已存在, 则不设置.
+     * 简单设置缓存，不存在时设置成功
      * @param string    $cache_id       缓存key
      * @param mix       $var            缓存值
      * @param int       $ttl            有效期(5秒)
