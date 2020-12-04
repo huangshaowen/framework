@@ -635,6 +635,25 @@ class Redis {
     }
 
     /**
+     * 简单设置缓存
+     * 当 key 不存在时, 设置指定 key 的值内容. 如果已存在, 则不设置.
+     * @param string    $cache_id       缓存key
+     * @param mix       $var            缓存值
+     * @param int       $ttl            有效期(5秒)
+     * @return bool
+     */
+    public function simple_setnx(string $cache_id, $var, int $ttl = 5) {
+        $key = $this->getCacheKey($cache_id);
+        $var = $this->setValue($var);
+
+        if ($this->is_available()) {
+            return $this->_getConForKey($key)->set($key, $var, ['nx', 'ex' => $ttl]);
+        }
+        
+        return false;
+    }
+
+    /**
      * 简单获取缓存
      * @param string    $cache_id           缓存名称
      * @param bool      $default            默认返回　false
@@ -741,13 +760,13 @@ class Redis {
     /**
      *  操作次数限制函数,采用滑动窗口: 限制 uid 在 period 秒内能操作 action 最多 max_count 次.
      *  如果超过限制, 返回 false.
-     * @param string $uid
-     * @param string $action
-     * @param int $max_count
-     * @param int $period
+     * @param type $uid
+     * @param type $action
+     * @param type $max_count
+     * @param type $period
      * @return boolean
      */
-    public function act_limit(string $uid, string $action, int $max_count, int $period) {
+    public function act_limit($uid, $action, $max_count, $period) {
         $now = time();
         $expire = intval($now / $period) * $period + $period;
         $ttl = $expire - $now;
@@ -765,19 +784,19 @@ class Redis {
         $pipe->expire($zname, $ttl + 1);  //多加一秒过期时间
         $replies = $pipe->exec();
 
-        return $replies[2] <= $max_count ? true : false;
+        return $replies[2] <= $max_count;
     }
 
     /**
      *  操作次数限制函数,采用计数次: 限制 uid 在 period 秒内能操作 action 最多 max_count 次.
      *  如果超过限制, 返回 false.
-     * @param string $uid
-     * @param string $action
-     * @param int $max_count
-     * @param int $period
+     * @param type $uid
+     * @param type $action
+     * @param type $max_count
+     * @param type $period
      * @return boolean
      */
-    public function act_count_limit(string $uid, string $action, int $max_count, int $period) {
+    public function act_count_limit($uid, $action, $max_count, $period) {
         $now = time();
         $expire = intval($now / $period) * $period + $period;
         $ttl = $expire - $now;
