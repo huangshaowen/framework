@@ -241,8 +241,9 @@ class MYSQLModel {
         if (false !== $result && is_numeric($result)) {
             $pk = $this->getPk();
             // 增加复合主键支持
-            if (is_array($pk))
+            if (is_array($pk)) {
                 return $result;
+            }
             $insertId = $this->getLastInsID();
             if ($insertId) {
                 // 自增主键返回插入ID
@@ -250,6 +251,50 @@ class MYSQLModel {
             }
         }
         return $result;
+    }
+
+    public function addAll($dataList, $options = array(), $replace = false) {
+        if (empty($dataList)) {
+            $this->error = '非法数据对象！';
+            return false;
+        }
+        // 数据处理
+        foreach ($dataList as $key => $data) {
+            $dataList[$key] = $this->_facade($data);
+        }
+        // 分析表达式
+        $options = $this->_parseOptions($options);
+        // 写入数据到数据库
+        $result = $this->db->insertAll($dataList, $options, $replace);
+        if (false !== $result) {
+            $insertId = $this->getLastInsID();
+            if ($insertId) {
+                return $insertId;
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * 通过Select方式添加记录
+     * @access public
+     * @param string $fields 要插入的数据表字段名
+     * @param string $table 要插入的数据表名
+     * @param array $options 表达式
+     * @return boolean
+     */
+    public function selectAdd($fields = '', $table = '', $options = array()) {
+        // 分析表达式
+        $options = $this->_parseOptions($options);
+        // 写入数据到数据库
+        if (false === $result = $this->db->selectInsert($fields ?: $options['field'], $table ?: $this->getTableName(), $options)) {
+            // 数据库插入操作失败
+            $this->error = '操作出现错误';
+            return false;
+        } else {
+            // 插入成功
+            return $result;
+        }
     }
 
     /**
@@ -974,7 +1019,7 @@ class MYSQLModel {
      * @return Model
      */
     public function union($union, $all = false) {
-        if (empty($union)){
+        if (empty($union)) {
             return $this;
         }
         if ($all) {
