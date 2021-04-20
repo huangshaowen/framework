@@ -386,7 +386,7 @@ class ssdbService {
     public function simple_get($k) {
         if ($this->is_available()) {
             $v = $this->_getConForKey($k)->get($k);
-            if (empty($v)) {
+            if (is_null($v) || false === $v) {
                 return false;
             }
             return $v;
