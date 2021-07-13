@@ -166,12 +166,6 @@ class Request {
     protected $filter;
 
     /**
-     * 扩展方法
-     * @var array
-     */
-    protected $hook = [];
-
-    /**
      * php://input内容
      * @var string
      */
@@ -199,30 +193,6 @@ class Request {
             $obj = new self();
         }
         return $obj;
-    }
-
-    public function __call($method, $args) {
-        if (array_key_exists($method, $this->hook)) {
-            array_unshift($args, $this);
-            return call_user_func_array($this->hook[$method], $args);
-        } else {
-            throw new Exception('method not exists:' . $method);
-        }
-    }
-
-    /**
-     * Hook 方法注入
-     * @access public
-     * @param  string|array  $method 方法名
-     * @param  mixed         $callback callable
-     * @return void
-     */
-    public function hook($method, $callback = null) {
-        if (is_array($method)) {
-            $this->hook = array_merge($this->hook, $method);
-        } else {
-            $this->hook[$method] = $callback;
-        }
     }
 
     /**

@@ -38,9 +38,10 @@ class kafkaQueue {
      * 普通队列加入数据
      * @param   string      $queue_name         队列名称
      * @param   array       $data               数据
+     * @param   string      $key                主键(NULL)
      * @return boolean
      */
-    public function qpush(string $queue_name = 'queue_task', array $data = []) {
+    public function qpush(string $queue_name = 'queue_task', array $data = [], string $key = null) {
         if (empty($data)) {
             return false;
         }
@@ -50,7 +51,7 @@ class kafkaQueue {
         $body = $this->setValue($data);
 
         /* 随机选择partition */
-        $topic->produce(\RD_KAFKA_PARTITION_UA, 0, $body);
+        $topic->produce(\RD_KAFKA_PARTITION_UA, 0, $body, $key);
         $this->producer->poll(0);
 
         return true;
